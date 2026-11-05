@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+
 namespace TelemetryLink.Core.Security;
 
 /// <summary>
@@ -13,8 +15,8 @@ public static class PacketAuthenticator
 
     public static byte[] ComputeTag(ReadOnlySpan<byte> headerAndCiphertext, byte[] macKey)
     {
-        // TODO(S2): HMACSHA256.HashData(macKey, headerAndCiphertext)
-        throw new NotImplementedException("PacketAuthenticator.ComputeTag");
+        ArgumentNullException.ThrowIfNull(macKey);
+        return HMACSHA256.HashData(macKey, headerAndCiphertext);
     }
 
     /// <summary>
@@ -23,7 +25,7 @@ public static class PacketAuthenticator
     /// </summary>
     public static bool Verify(ReadOnlySpan<byte> headerAndCiphertext, ReadOnlySpan<byte> tag, byte[] macKey)
     {
-        // TODO(S2): CryptographicOperations.FixedTimeEquals, а не SequenceEqual.
-        throw new NotImplementedException("PacketAuthenticator.Verify");
+        if (tag.Length != TagSize) return false;
+        return CryptographicOperations.FixedTimeEquals(ComputeTag(headerAndCiphertext, macKey), tag);
     }
 }

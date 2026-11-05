@@ -15,30 +15,6 @@ namespace TelemetryLink.Tests;
 /// Категорії позначені в назві файла-групи:
 ///   [С] стандартний   [К] крайній   [Х] хибний   [І] інваріант
 /// </summary>
-public class PacketTests
-{
-    [Fact(Skip = "TODO(S2) [С]: пакет проходить туди й назад побайтово")] public void BuildThenRead_RestoresFramesByteForByte() { }
-    [Fact(Skip = "TODO(S2) [С]: режим NO_COMPRESSION")] public void BuildThenRead_WorksInNoCompressionMode() { }
-    [Fact(Skip = "TODO(S2) [К]: пакет 74 байти → E_SHORT")] public void PacketShorterThan75Bytes_ReturnsEShort() { }
-    [Fact(Skip = "TODO(S2) [К]: порожній вхід не кидає виняток")] public void EmptyInput_ReturnsEShort_WithoutThrowing() { }
-    [Fact(Skip = "TODO(S2) [Х]: змінений байт шифротексту → E_HMAC (кейс 10)")] public void TamperedCiphertextByte_ReturnsEHmac() { }
-    [Fact(Skip = "TODO(S2) [Х]: змінений тег → E_HMAC (кейс 10)")] public void TamperedTag_ReturnsEHmac() { }
-    [Fact(Skip = "TODO(S2) [Х]: обрізаний пакет → E_LENGTH (кейс 11)")] public void TruncatedPacket_ReturnsELength() { }
-    [Fact(Skip = "TODO(S2) [Х]: зіпсований magic → E_MAGIC")] public void BadMagic_ReturnsEMagic() { }
-    [Fact(Skip = "TODO(S2) [Х]: невірний пароль → E_HMAC і ЖОДНОГО кадру (кейс 11)")] public void WrongPassword_ReturnsEHmac_AndNoFrames() { }
-}
-
-public class SecurityTests
-{
-    [Fact(Skip = "TODO(S2) [С]: той самий пароль і сіль → ті самі ключі")] public void Derive_SamePasswordAndSalt_ProducesSameKeys() { }
-    [Fact(Skip = "TODO(S2) [І]: K_enc != K_mac — пряме питання на захисті")] public void EncryptionKey_DiffersFromMacKey() { }
-    [Fact(Skip = "TODO(S2) [К]: перший блок лічильника має номер 1, не 0")] public void CounterBlock_FirstBlockIndexIsOne() { }
-    [Fact(Skip = "TODO(S2) [С]: Transform двічі повертає оригінал")] public void Transform_AppliedTwice_ReturnsOriginal() { }
-    [Fact(Skip = "TODO(S2) [К]: CTR не змінює довжину, зокрема для 0, 15, 16, 17 байтів")] public void Transform_PreservesLength() { }
-    [Fact(Skip = "TODO(S2) [І]: різні пакети — різний nonce")] public void BuildNonce_DiffersBetweenPackets() { }
-    [Fact(Skip = "TODO(S2) [Х]: тег, порахований іншим ключем, не проходить")] public void Verify_TagFromDifferentKey_ReturnsFalse() { }
-}
-
 public class PackerTests
 {
     [Fact(Skip = "TODO(S4) [І]: ДП збігається з повним перебором на 200 наборах")] public void DynamicProgramming_MatchesBruteForce() { }

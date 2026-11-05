@@ -16,10 +16,18 @@ public static class PacketWriter
         byte[] nonce,
         SessionKeys keys)
     {
-        // TODO(S2). Порядок операцій: стиснути → зашифрувати → додати код
-        // автентичності (Encrypt-then-MAC). Тег рахується над ЗАГОЛОВКОМ
-        // І ШИФРОТЕКСТОМ РАЗОМ, а не над відкритим текстом.
-        throw new NotImplementedException("PacketWriter.Build");
+        ArgumentNullException.ThrowIfNull(keys);
+        if (salt is null || salt.Length != SessionKeys.SaltSize)
+            throw new ArgumentException("Сіль має містити 16 байтів.", nameof(salt));
+        byte[] plaintext = PayloadWriter.Write(content);
+        byte[] ciphertext = PacketCipher.Transform(plaintext, keys.EncryptionKey, nonce);
+        var header = new PacketHeader(deviceId, packetSequence, salt, nonce, (uint)ciphertext.Length);
+        var packet = new byte[checked(MinimumPacketSize + ciphertext.Length)];
+        header.WriteTo(packet);
+        ciphertext.CopyTo(packet, PacketHeader.SizeInBytes);
+        int tagOffset = PacketHeader.SizeInBytes + ciphertext.Length;
+        PacketAuthenticator.ComputeTag(packet.AsSpan(0, tagOffset), keys.MacKey).CopyTo(packet, tagOffset);
+        return packet;
     }
 }
 
@@ -32,20 +40,20 @@ public static class PacketReader
 {
     public static ReceiveResult Read(ReadOnlySpan<byte> packet, SessionKeys keys)
     {
-        // TODO(S2). Рівно ця послідовність:
-        //
-        //   1. довжина ≥ 75 байтів                          інакше E_SHORT
-        //   2. magic == "TLM1" і version == 1                інакше E_MAGIC
-        //   3. довжина == 43 + ciphertext_len + 32           інакше E_LENGTH
-        //   4. HMAC над packet[0 .. 43+ct_len-1] У ПОСТІЙНИЙ ЧАС
-        //   5. не збігся → ВІДХИЛИТИ (E_HMAC). НЕ розшифровувати, НЕ логувати вміст
-        //   6. розшифрувати AES-256-CTR
-        //   7. розібрати навантаження                        інакше E_PAYLOAD
-        //   8. декодувати кадри                              інакше E_CODE
-        //
-        // max_packet_bytes ТУТ НЕ ПЕРЕВІРЯЄТЬСЯ: це обмеження передавача,
-        // а не умова валідності формату (§3.5). Еталонний ref_04_session.bin
-        // має 771 байт при ліміті 512 і мусить прийматися.
-        throw new NotImplementedException("PacketReader.Read");
+        if (packet.Length < PacketWriter.MinimumPacketSize) return ReceiveResult.Rejected(RejectionCode.E_SHORT);
+        if (!PacketHeader.HasValidMagic(packet)) return ReceiveResult.Rejected(RejectionCode.E_MAGIC);
+        var header = PacketHeader.ReadFrom(packet);
+        if ((long)PacketWriter.MinimumPacketSize + header.CiphertextLength != packet.Length)
+            return ReceiveResult.Rejected(RejectionCode.E_LENGTH, header);
+        int tagOffset = packet.Length - PacketAuthenticator.TagSize;
+        // Автентичність перевіряємо до дешифрування та розбору навантаження.
+        if (!PacketAuthenticator.Verify(packet[..tagOffset], packet[tagOffset..], keys.MacKey))
+            return ReceiveResult.Rejected(RejectionCode.E_HMAC, header);
+        byte[] plaintext = PacketCipher.Transform(packet.Slice(PacketHeader.SizeInBytes,
+            (int)header.CiphertextLength), keys.EncryptionKey, header.Nonce);
+        var code = PayloadReader.TryRead(plaintext, out var payload);
+        return code == RejectionCode.None
+            ? ReceiveResult.Accepted(header, payload!)
+            : ReceiveResult.Rejected(code, header);
     }
 }

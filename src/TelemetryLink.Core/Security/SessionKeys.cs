@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+
 namespace TelemetryLink.Core.Security;
 
 /// <summary>
@@ -31,14 +33,12 @@ public sealed class SessionKeys
 
     public static SessionKeys Derive(string password, ReadOnlySpan<byte> salt)
     {
-        // TODO(S2):
-        //   master = PBKDF2-HMAC-SHA256(password, salt, 100000, dkLen = 64)
-        //   K_enc  = master[0..31]
-        //   K_mac  = master[32..63]
-        //
-        // Пароль — UTF-8 БЕЗ завершального нуля.
-        // Бібліотека дозволена: Rfc2898DeriveBytes.Pbkdf2.
-        throw new NotImplementedException("SessionKeys.Derive");
+        ArgumentNullException.ThrowIfNull(password);
+        if (salt.Length != SaltSize) throw new ArgumentException("Сіль має містити 16 байтів.", nameof(salt));
+        byte[] master = Rfc2898DeriveBytes.Pbkdf2(password, salt, Iterations,
+            HashAlgorithmName.SHA256, DerivedLength);
+        try { return new SessionKeys(master[..32], master[32..]); }
+        finally { CryptographicOperations.ZeroMemory(master); }
     }
 
     /// <summary>Випадкова сіль сеансу.</summary>

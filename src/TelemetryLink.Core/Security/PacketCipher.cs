@@ -1,3 +1,6 @@
+using System.Buffers.Binary;
+using System.Security.Cryptography;
+
 namespace TelemetryLink.Core.Security;
 
 /// <summary>
@@ -22,8 +25,11 @@ public static class PacketCipher
     /// </summary>
     public static void BuildCounterBlock(ReadOnlySpan<byte> nonce, uint blockIndex, Span<byte> destination)
     {
-        // TODO(S2)
-        throw new NotImplementedException("PacketCipher.BuildCounterBlock");
+        if (nonce.Length != NonceSize) throw new ArgumentException("Nonce має містити 12 байтів.", nameof(nonce));
+        if (destination.Length < BlockSize) throw new ArgumentException("Потрібно 16 байтів.", nameof(destination));
+        if (blockIndex == 0) throw new ArgumentOutOfRangeException(nameof(blockIndex));
+        nonce.CopyTo(destination);
+        BinaryPrimitives.WriteUInt32BigEndian(destination.Slice(12, 4), blockIndex);
     }
 
     /// <summary>
@@ -33,13 +39,31 @@ public static class PacketCipher
     /// </summary>
     public static byte[] Transform(ReadOnlySpan<byte> data, byte[] encryptionKey, ReadOnlySpan<byte> nonce)
     {
-        // TODO(S2):
-        //   keystream = AES-256-ECB(K_enc, counter_block(1)) || AES-256-ECB(K_enc, counter_block(2)) || ...
-        //   ciphertext[j] = plaintext[j] XOR keystream[j]
-        //
-        // ECB тут — примітив для генерації гами, а не режим шифрування даних.
-        // Aes.Create() з Mode = CipherMode.ECB, Padding = PaddingMode.None.
-        throw new NotImplementedException("PacketCipher.Transform");
+        ArgumentNullException.ThrowIfNull(encryptionKey);
+        if (encryptionKey.Length != 32) throw new ArgumentException("Ключ AES-256 має містити 32 байти.", nameof(encryptionKey));
+        if (nonce.Length != NonceSize) throw new ArgumentException("Nonce має містити 12 байтів.", nameof(nonce));
+        using var aes = Aes.Create();
+        aes.Key = encryptionKey;
+        aes.Mode = CipherMode.ECB;
+        aes.Padding = PaddingMode.None;
+        using var encryptor = aes.CreateEncryptor();
+        var result = new byte[data.Length];
+        var counter = new byte[BlockSize];
+        var gamma = new byte[BlockSize];
+        try
+        {
+            for (int offset = 0; offset < data.Length;)
+            {
+                uint index = (uint)(offset / BlockSize) + 1;
+                BuildCounterBlock(nonce, index, counter);
+                encryptor.TransformBlock(counter, 0, BlockSize, gamma, 0);
+                int count = Math.Min(BlockSize, data.Length - offset);
+                for (int i = 0; i < count; i++) result[offset + i] = (byte)(data[offset + i] ^ gamma[i]);
+                offset += count;
+            }
+            return result;
+        }
+        finally { CryptographicOperations.ZeroMemory(gamma); }
     }
 
     /// <summary>
@@ -48,7 +72,10 @@ public static class PacketCipher
     /// </summary>
     public static byte[] BuildNonce(ReadOnlySpan<byte> sessionPrefix8, uint packetSequence)
     {
-        // TODO(S2)
-        throw new NotImplementedException("PacketCipher.BuildNonce");
+        if (sessionPrefix8.Length != 8) throw new ArgumentException("Префікс сеансу має містити 8 байтів.", nameof(sessionPrefix8));
+        var nonce = new byte[NonceSize];
+        sessionPrefix8.CopyTo(nonce);
+        BinaryPrimitives.WriteUInt32BigEndian(nonce.AsSpan(8), packetSequence);
+        return nonce;
     }
 }
