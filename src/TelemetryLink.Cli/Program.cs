@@ -11,6 +11,7 @@ try
 {
     return options.Command switch
     {
+        "compress" => CompressCommand.Execute(options),
         "run" => RunCommand.Execute(options),
         "compare" => CompareCommand.Execute(options),
         "verify" => VerifyCommand.Execute(options),
@@ -40,6 +41,7 @@ static int Help()
 
         tlm <команда> [опції]
 
+          compress     перевірка стиснення і точного відновлення сеансу
           run          один прогін тракту, друк метрики Q
           compare      кілька прогонів із різними алгоритмами, таблиця і гістограма
           verify       приймальні перевірки на еталонних пакетах викладача

@@ -1,44 +1,73 @@
 namespace TelemetryLink.Core.Compression;
 
-/// <summary>
-/// Побудова довжин кодів Гаффмана через ЧЕРГУ З ПРІОРИТЕТАМИ.
-///
-/// Повертаються саме ДОВЖИНИ, а не дерево: у пакет пишуться тільки довжини,
-/// а коди обидві сторони відновлюють канонічно (FORMAT_SPEC §3.2–3.3).
-/// Дерево після побудови довжин більше нікому не потрібне.
-///
-/// КРОК S3.
-/// </summary>
+/// <summary>Побудова довжин кодів через чергу з пріоритетами. S3.</summary>
 public static class HuffmanTreeBuilder
 {
-    /// <summary>
-    /// Довжини кодів для 256 символів. Нуль означає, що символ не трапляється.
-    /// </summary>
-    /// <param name="frequencies">Частоти, індекс = символ.</param>
+    private sealed record Node(int Symbol, Node? Left = null, Node? Right = null);
+
     public static byte[] BuildLengths(ReadOnlySpan<int> frequencies)
     {
-        // TODO(S3). Порядок дій:
-        //
-        //  1. Порожній алфавіт  → усі довжини 0 (пакет із нуля кадрів).
-        //  2. РІВНО ОДИН символ → довжина 1, код 0. Довжина 0 у цьому випадку
-        //     є невідповідністю формату (FORMAT_SPEC §3.2). Це окремий
-        //     приймальний кейс C1 №7 — не забудьте його.
-        //  3. Інакше: класичний Гаффман через PriorityQueue.
-        //     Нічиї розв'язуються ДЕТЕРМІНОВАНО: кладіть у чергу пару
-        //     (частота, номер вставки), листки — у порядку зростання символу.
-        //     Без цього однакові дані дадуть різні коди від запуску до запуску.
-        //  4. Якщо найдовший код > 15 біт — CodeLengthLimiter.RaiseFloor
-        //     і побудувати дерево заново (до 64 спроб).
-        //
-        // ЗЛИВАТИ рідкісні символи в один ЗАБОРОНЕНО: це руйнує побайтове
-        // відновлення, а escape-механізму формат не передбачає.
-        throw new NotImplementedException("HuffmanTreeBuilder.BuildLengths");
+        if (frequencies.Length != 256)
+            throw new ArgumentException("Очікується рівно 256 частот.", nameof(frequencies));
+        var weights = new long[256];
+        var symbols = new List<int>();
+        for (int symbol = 0; symbol < 256; symbol++)
+        {
+            if (frequencies[symbol] < 0)
+                throw new ArgumentException("Частоти не можуть бути від'ємними.", nameof(frequencies));
+            weights[symbol] = frequencies[symbol];
+            if (weights[symbol] > 0) symbols.Add(symbol);
+        }
+        if (symbols.Count == 0) return new byte[256];
+        if (symbols.Count == 1)
+        {
+            var lengths = new byte[256];
+            lengths[symbols[0]] = 1;
+            return lengths;
+        }
+
+        for (int attempt = 0; attempt < 64; attempt++)
+        {
+            var lengths = BuildTree(symbols, weights);
+            if (lengths.Max() <= Format.CanonicalCodes.MaxCodeLength) return lengths;
+            CodeLengthLimiter.RaiseFloor(symbols, weights, Format.CanonicalCodes.MaxCodeLength);
+        }
+        throw new InvalidOperationException("Не вдалося обмежити довжини кодів за 64 спроби.");
     }
 
-    /// <summary>Частоти байтів у вибірці.</summary>
+    private static byte[] BuildTree(IReadOnlyList<int> symbols, long[] weights)
+    {
+        // Номер вставки однозначно розв'язує нічиї, включно з внутрішніми вузлами.
+        var queue = new PriorityQueue<Node, (long Weight, int Order)>();
+        int order = 0;
+        foreach (int symbol in symbols)
+            queue.Enqueue(new Node(symbol), (weights[symbol], order++));
+        while (queue.Count > 1)
+        {
+            queue.TryDequeue(out var left, out var leftPriority);
+            queue.TryDequeue(out var right, out var rightPriority);
+            queue.Enqueue(new Node(-1, left, right),
+                (checked(leftPriority.Weight + rightPriority.Weight), order++));
+        }
+        var result = new byte[256];
+        var stack = new Stack<(Node Node, int Depth)>();
+        stack.Push((queue.Dequeue(), 0));
+        while (stack.TryPop(out var item))
+        {
+            if (item.Node.Symbol >= 0) result[item.Node.Symbol] = checked((byte)item.Depth);
+            else
+            {
+                stack.Push((item.Node.Right!, item.Depth + 1));
+                stack.Push((item.Node.Left!, item.Depth + 1));
+            }
+        }
+        return result;
+    }
+
     public static int[] CountFrequencies(ReadOnlySpan<byte> data)
     {
-        // TODO(S3)
-        throw new NotImplementedException("HuffmanTreeBuilder.CountFrequencies");
+        var frequencies = new int[256];
+        foreach (byte symbol in data) frequencies[symbol]++;
+        return frequencies;
     }
 }

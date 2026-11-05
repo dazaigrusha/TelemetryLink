@@ -10,19 +10,21 @@ public sealed class HuffmanCodec : ISymbolCodec
 
     public CodeTable BuildTable(ReadOnlySpan<byte> sample)
     {
-        // TODO(S3): частоти → довжини → CodeTable.FromLengths.
-        throw new NotImplementedException("HuffmanCodec.BuildTable");
+        return CodeTable.FromLengths(HuffmanTreeBuilder.BuildLengths(
+            HuffmanTreeBuilder.CountFrequencies(sample)));
     }
 
     public byte[] Encode(ReadOnlySpan<byte> data, CodeTable table)
     {
-        // TODO(S3): для кожного байта записати table.CodeOf(байт)
-        // довжиною table.LengthOf(байт), СТАРШИМИ БІТАМИ ВПЕРЕД.
-        //
-        // Символ, відсутній у таблиці, — це помилка ПРОГРАМІСТА (таблицю
-        // побудовано не за тими даними), тому тут доречний виняток,
-        // а не код відмови.
-        throw new NotImplementedException("HuffmanCodec.Encode");
+        ArgumentNullException.ThrowIfNull(table);
+        var writer = new BitWriter();
+        foreach (byte symbol in data)
+        {
+            if (!table.Contains(symbol))
+                throw new ArgumentException($"Символ 0x{symbol:X2} відсутній у таблиці.", nameof(data));
+            writer.WriteBits(table.CodeOf(symbol), table.LengthOf(symbol));
+        }
+        return writer.ToArray();
     }
 
     public RejectionCode Decode(ReadOnlyMemory<byte> bitstream, CodeTable table, int symbolCount, out byte[] data)

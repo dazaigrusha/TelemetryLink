@@ -115,23 +115,124 @@ public class HuffmanTests
                         $"Код {code} є префіксом коду {other}.");
     }
 
-    // ---------- ЗАГОТОВКИ ----------
+    [Fact]
+    public void EncodeThenDecode_ReturnsOriginal_ForRandomData()
+    {
+        var random = new Random(42);
+        for (int sample = 0; sample < 100; sample++)
+        {
+            var data = new byte[random.Next(0, 4097)];
+            random.NextBytes(data);
+            Assert.Equal(data, RoundTrip(data));
+        }
+    }
 
-    [Fact(Skip = "TODO(S3)")]
-    public void EncodeThenDecode_ReturnsOriginal_ForRandomData() { }
+    [Fact]
+    public void AllSymbolsEquallyLikely_ProducesFlatTable()
+    {
+        byte[] data = Enumerable.Range(0, 256).Select(x => (byte)x).ToArray();
+        var table = _codec.BuildTable(data);
+        Assert.Equal(256, table.SymbolCount);
+        Assert.All(table.Entries, entry => Assert.Equal((byte)8, entry.Length));
+        Assert.Equal(data, _codec.Encode(data, table));
+        Assert.Equal(data, RoundTrip(data));
+    }
 
-    [Fact(Skip = "TODO(S3): усі 256 символів мають отримати довжину 8")]
-    public void AllSymbolsEquallyLikely_ProducesFlatTable() { }
+    [Fact]
+    public void EmptyInput_ProducesEmptyTable()
+    {
+        Assert.Empty(_codec.BuildTable(Array.Empty<byte>()).Entries);
+        Assert.Empty(RoundTrip(Array.Empty<byte>()));
+    }
 
-    [Fact(Skip = "TODO(S3): порожній вхід → порожня таблиця, без падіння")]
-    public void EmptyInput_ProducesEmptyTable() { }
+    [Fact]
+    public void NoCodeLengthExceeds15Bits_OnAdversarialFrequencies()
+    {
+        var frequencies = new int[256];
+        frequencies[0] = frequencies[1] = 1;
+        for (int i = 2; i < 46; i++) frequencies[i] = checked(frequencies[i - 1] + frequencies[i - 2]);
+        int[] original = (int[])frequencies.Clone();
+        byte[] lengths = HuffmanTreeBuilder.BuildLengths(frequencies);
+        Assert.Equal(original, frequencies);
+        for (int i = 0; i < 46; i++) Assert.InRange((int)lengths[i], 1, 15);
+        Assert.All(lengths.Skip(46), length => Assert.Equal((byte)0, length));
+        var table = CodeTable.FromLengths(lengths);
+        byte[] symbols = Enumerable.Range(0, 46).Select(i => (byte)i).ToArray();
+        byte[] encoded = _codec.Encode(symbols, table);
+        Assert.Equal(RejectionCode.None, _codec.Decode(encoded, table, symbols.Length, out var decoded));
+        Assert.Equal(symbols, decoded);
+    }
 
-    [Fact(Skip = "TODO(S3): частоти Фібоначчі, жоден код не довший за 15 біт")]
-    public void NoCodeLengthExceeds15Bits_OnAdversarialFrequencies() { }
+    [Fact]
+    public void BuildTable_IsDeterministic_AcrossRuns()
+    {
+        byte[] data = Encoding.UTF8.GetBytes("deterministic huffman tree 0123456789");
+        var expected = _codec.BuildTable(data);
+        for (int i = 0; i < 10; i++)
+        {
+            var actual = _codec.BuildTable(data.Reverse().ToArray());
+            Assert.Equal(expected.Entries.ToArray(), actual.Entries.ToArray());
+            Assert.Equal(_codec.Encode(data, expected), _codec.Encode(data, actual));
+        }
+    }
 
-    [Fact(Skip = "TODO(S3): однакові дані → однакові коди від запуску до запуску")]
-    public void BuildTable_IsDeterministic_AcrossRuns() { }
+    [Fact]
+    public void Encode_SymbolAbsentFromTable_Throws()
+        => Assert.Throws<ArgumentException>(() => _codec.Encode(new byte[] { 2 }, _codec.BuildTable(new byte[] { 1 })));
 
-    [Fact(Skip = "TODO(S3): символ, відсутній у таблиці, — помилка програміста")]
-    public void Encode_SymbolAbsentFromTable_Throws() { }
+    [Fact]
+    public void ClassicHistogram_HasKnownOptimalWeightedLength()
+    {
+        var frequencies = new int[256];
+        new[] { 5, 9, 12, 13, 16, 45 }.CopyTo(frequencies, 0);
+        byte[] lengths = HuffmanTreeBuilder.BuildLengths(frequencies);
+        Assert.Equal(224L, Enumerable.Range(0, 6).Sum(i => (long)frequencies[i] * lengths[i]));
+    }
+
+    [Fact]
+    public void MaximumFrequencies_DoNotOverflowInternalWeights()
+    {
+        byte[] lengths = HuffmanTreeBuilder.BuildLengths(Enumerable.Repeat(int.MaxValue, 256).ToArray());
+        Assert.All(lengths, length => Assert.Equal((byte)8, length));
+    }
+
+    [Fact]
+    public void InvalidFrequencies_AreRejected()
+    {
+        Assert.Throws<ArgumentException>(() => HuffmanTreeBuilder.BuildLengths(new int[255]));
+        var frequencies = new int[256];
+        frequencies[0] = -1;
+        Assert.Throws<ArgumentException>(() => HuffmanTreeBuilder.BuildLengths(frequencies));
+    }
+
+    [Fact]
+    public void Limiter_RaisesOnlyPresentSymbols_AndMakesProgress()
+    {
+        var frequencies = new long[256];
+        frequencies[0] = 1;
+        frequencies[1] = 1000000;
+        CodeLengthLimiter.RaiseFloor(new[] { 0, 1 }, frequencies, 15);
+        long previous = frequencies[0];
+        Assert.True(previous > 1);
+        CodeLengthLimiter.RaiseFloor(new[] { 0, 1 }, frequencies, 15);
+        Assert.True(frequencies[0] > previous);
+        Assert.Equal(0L, frequencies[2]);
+    }
+
+    [Theory]
+    [InlineData("ref_01_single_frame")]
+    [InlineData("ref_03_degenerate")]
+    [InlineData("ref_04_session")]
+    [InlineData("ref_05_no_compression")]
+    [InlineData("ref_06_class_table")]
+    public void BuildTable_MatchesReferenceFrequencies(string name)
+    {
+        var result = PacketReader.Read(File.ReadAllBytes(DataKit.ReferencePath(name + ".bin")), DataKit.Keys());
+        Assert.True(result.IsAccepted);
+        byte[] data = TelemetryLink.Core.Domain.TelemetryFrame.Serialize(result.Frames);
+        Assert.Equal(data, RoundTrip(data));
+        // Сирий еталон таблиці не містить. Решта таблиць побудовані за тими самими кадрами.
+        if ((result.Payload!.Flags & PacketFlags.NoCompression) == 0)
+            Assert.Equal(result.Payload.Table.Entries.ToArray(), _codec.BuildTable(data).Entries.ToArray());
+    }
 }
