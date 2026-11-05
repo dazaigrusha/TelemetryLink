@@ -1,0 +1,8 @@
+.vs/
+*.bin
+bin/
+obj/
+results/
+model.json
+*.user
+.DS_Store

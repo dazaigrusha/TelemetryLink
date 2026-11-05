@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- Виконуваний файл називається tlm, а не TelemetryLink.Cli. -->
+    <AssemblyName>tlm</AssemblyName>
+    <RootNamespace>TelemetryLink.Cli</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TelemetryLink.Core\TelemetryLink.Core.csproj" />
+  </ItemGroup>
+
+</Project>

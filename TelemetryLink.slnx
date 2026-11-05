@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TelemetryLink.Cli/TelemetryLink.Cli.csproj" />
+    <Project Path="src/TelemetryLink.Core/TelemetryLink.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TelemetryLink.Tests/TelemetryLink.Tests.csproj" />
+  </Folder>
+</Solution>
