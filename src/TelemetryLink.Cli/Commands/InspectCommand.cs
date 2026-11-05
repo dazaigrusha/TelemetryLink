@@ -97,6 +97,10 @@ public static class InspectCommand
         Console.WriteLine($"кадрів {session.Frames.Count}, критичних {session.CriticalCount}, " +
                           $"B_ref {session.ReferenceBits} біт");
 
+        Console.WriteLine("розподіл mode — " + string.Join(", ",
+            session.Frames.GroupBy(frame => frame.Mode).OrderBy(group => group.Key)
+                .Select(group => $"mode {group.Key}: {group.Count()}")));
+
         if (session.Labels is not null)
         {
             var counts = session.Labels.GroupBy(l => l).OrderBy(g => g.Key)

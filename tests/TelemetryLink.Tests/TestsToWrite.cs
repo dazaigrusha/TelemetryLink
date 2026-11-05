@@ -15,16 +15,6 @@ namespace TelemetryLink.Tests;
 /// Категорії позначені в назві файла-групи:
 ///   [С] стандартний   [К] крайній   [Х] хибний   [І] інваріант
 /// </summary>
-public class TelemetryFrameTests
-{
-    [Fact(Skip = "TODO(S0) [С]")] public void WriteTo_ProducesExactly12Bytes_InBigEndian() { }
-    [Fact(Skip = "TODO(S0) [С]")] public void ReadFrom_OfWriteTo_RestoresFrame() { }
-    [Fact(Skip = "TODO(S0) [К]: vibration = -3 має дати FF FD")] public void NegativeValues_UseTwosComplement() { }
-    [Fact(Skip = "TODO(S0) [К]: порожній список → порожній масив")] public void Serialize_EmptyList_ProducesEmptyArray() { }
-    [Fact(Skip = "TODO(S0) [Х]: mode = 8 і critical = 2 недопустимі")] public void InvalidFieldValues_AreRejectedByValidation() { }
-    [Fact(Skip = "TODO(S0) [Х]: довжина не кратна 12")] public void Deserialize_LengthNotMultipleOf12_Throws() { }
-}
-
 public class BitIoTests
 {
     [Fact(Skip = "TODO(S1) [С]: перший біт стає 0x80")] public void WriteBits_PacksMostSignificantBitFirst() { }

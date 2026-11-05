@@ -29,6 +29,11 @@ public static class TelemetryCsvReader
             ?? throw new InvalidDataException($"Файл {path} порожній.");
 
         var columns = header.Split(',');
+        string[] expected = ["timestamp_ms", "altitude_dm", "temp_c10", "vibration", "mode", "critical"];
+        if ((columns.Length != 6 && columns.Length != 7)
+            || !columns.Take(6).SequenceEqual(expected)
+            || (columns.Length == 7 && columns[6] != "label"))
+            throw new InvalidDataException($"{path}: невірний заголовок CSV.");
         int labelColumn = Array.IndexOf(columns, "label");
         hasLabels = labelColumn >= 0;
 
@@ -39,24 +44,37 @@ public static class TelemetryCsvReader
             if (string.IsNullOrWhiteSpace(line)) continue;
 
             var fields = line.Split(',');
-            if (fields.Length < 6)
-                throw new InvalidDataException($"{path}, рядок {lineNumber}: очікується щонайменше 6 полів.");
+            if (fields.Length != columns.Length)
+                throw new InvalidDataException($"{path}, рядок {lineNumber}: кількість полів не відповідає заголовку.");
 
-            var frame = new TelemetryFrame(
-                uint.Parse(fields[0], CultureInfo.InvariantCulture),
-                short.Parse(fields[1], CultureInfo.InvariantCulture),
-                short.Parse(fields[2], CultureInfo.InvariantCulture),
-                short.Parse(fields[3], CultureInfo.InvariantCulture),
-                byte.Parse(fields[4], CultureInfo.InvariantCulture),
-                byte.Parse(fields[5], CultureInfo.InvariantCulture));
+            try
+            {
+                var frame = new TelemetryFrame(
+                    uint.Parse(fields[0], CultureInfo.InvariantCulture),
+                    short.Parse(fields[1], CultureInfo.InvariantCulture),
+                    short.Parse(fields[2], CultureInfo.InvariantCulture),
+                    short.Parse(fields[3], CultureInfo.InvariantCulture),
+                    byte.Parse(fields[4], CultureInfo.InvariantCulture),
+                    byte.Parse(fields[5], CultureInfo.InvariantCulture));
 
-            // Валідація вхідної телеметрії — критерій C2, пункт 1.
-            if (!frame.IsValid)
-                throw new InvalidDataException(
-                    $"{path}, рядок {lineNumber}: mode={frame.Mode}, critical={frame.Critical} поза допустимим діапазоном.");
+                // Валідація вхідної телеметрії — критерій C2, пункт 1.
+                if (!frame.IsValid)
+                    throw new InvalidDataException(
+                        $"{path}, рядок {lineNumber}: mode={frame.Mode}, critical={frame.Critical} поза допустимим діапазоном.");
 
-            frames.Add(frame);
-            if (hasLabels) labels.Add(int.Parse(fields[labelColumn], CultureInfo.InvariantCulture));
+                frames.Add(frame);
+                if (hasLabels)
+                {
+                    int label = int.Parse(fields[labelColumn], CultureInfo.InvariantCulture);
+                    if (label < 0 || label > 2)
+                        throw new InvalidDataException($"{path}, рядок {lineNumber}: label має бути 0..2.");
+                    labels.Add(label);
+                }
+            }
+            catch (Exception exception) when (exception is FormatException or OverflowException)
+            {
+                throw new InvalidDataException($"{path}, рядок {lineNumber}: некоректне число або вихід за діапазон типу.", exception);
+            }
         }
 
         return new TelemetrySession(frames, hasLabels ? labels : null);
@@ -73,7 +91,11 @@ public static class TelemetryBinaryReader
             throw new InvalidDataException(
                 $"{path}: довжина {bytes.Length} не кратна {TelemetryFrame.SizeInBytes} байтам.");
 
-        return new TelemetrySession(TelemetryFrame.Deserialize(bytes), null);
+        var frames = TelemetryFrame.Deserialize(bytes);
+        for (int i = 0; i < frames.Length; i++)
+            if (!frames[i].IsValid)
+                throw new InvalidDataException($"{path}, кадр {i}: mode має бути 0..7, critical — 0 або 1.");
+        return new TelemetrySession(frames, null);
     }
 
     public static void Write(string path, IReadOnlyList<TelemetryFrame> frames)
