@@ -21,9 +21,11 @@ public sealed class BitReader
 
     public bool TryReadBit(out int bit)
     {
-        // TODO(S1): взяти байт _data.Span[_bitPosition / 8], витягти біт
-        // зі зсувом (7 - _bitPosition % 8). За межами потоку — повернути false.
-        throw new NotImplementedException("BitReader.TryReadBit");
+        bit = 0;
+        if (_bitPosition >= BitLength) return false;
+        bit = (_data.Span[_bitPosition / 8] >> (7 - _bitPosition % 8)) & 1;
+        _bitPosition++;
+        return true;
     }
 
     /// <summary>
@@ -32,7 +34,8 @@ public sealed class BitReader
     /// </summary>
     public bool RemainingBitsAreZero()
     {
-        // TODO(S1)
-        throw new NotImplementedException("BitReader.RemainingBitsAreZero");
+        for (int position = _bitPosition; position < BitLength; position++)
+            if (((_data.Span[position / 8] >> (7 - position % 8)) & 1) != 0) return false;
+        return true;
     }
 }

@@ -23,15 +23,25 @@ public static class CanonicalCodes
     /// <param name="lengths">Довжини кодів, індекс = символ, 0 = символ відсутній.</param>
     public static uint[] Assign(ReadOnlySpan<byte> lengths)
     {
-        // TODO(S3). Алгоритм зі специфікації, три кроки:
-        //
-        //   1. bl_count[L] = скільки символів мають довжину L, для L = 1..15
-        //   2. code = 0;  bl_count[0] = 0
-        //      для L = 1..15:  code = (code + bl_count[L-1]) << 1;  next_code[L] = code
-        //   3. символи перебираються ЗА ЗРОСТАННЯМ ЗНАЧЕННЯ СИМВОЛУ;
-        //      для символу s з довжиною L:  code(s) = next_code[L]++;
-        //
-        // Довжина > 15 — це ArgumentException: такий пакет не відповідає формату.
-        throw new NotImplementedException("CanonicalCodes.Assign");
+        if (lengths.Length != 256) throw new ArgumentException("Очікується 256 довжин.", nameof(lengths));
+        var counts = new uint[MaxCodeLength + 1];
+        foreach (byte length in lengths)
+        {
+            if (length > MaxCodeLength) throw new ArgumentException("Довжина коду перевищує 15.", nameof(lengths));
+            if (length > 0) counts[length]++;
+        }
+        var next = new uint[MaxCodeLength + 1];
+        uint code = 0;
+        for (int length = 1; length <= MaxCodeLength; length++)
+        {
+            code = (code + counts[length - 1]) << 1;
+            if (code + counts[length] > (1u << length))
+                throw new ArgumentException("Таблиця містить забагато кодів заданої довжини.", nameof(lengths));
+            next[length] = code;
+        }
+        var result = new uint[256];
+        for (int symbol = 0; symbol < 256; symbol++)
+            if (lengths[symbol] > 0) result[symbol] = next[lengths[symbol]]++;
+        return result;
     }
 }

@@ -29,7 +29,7 @@ public sealed class CodeTable
         for (int symbol = 0; symbol < 256; symbol++)
             if (lengths[symbol] > 0)
                 entries.Add(new CodeTableEntry((byte)symbol, lengths[symbol]));
-        Entries = entries;
+        Entries = entries.AsReadOnly();
 
         // TODO(S3): підготувати допоміжні структури для TryDecodeNext.
     }
@@ -57,7 +57,14 @@ public sealed class CodeTable
     public static CodeTable FromEntries(IEnumerable<CodeTableEntry> entries)
     {
         var lengths = new byte[256];
-        foreach (var entry in entries) lengths[entry.Symbol] = entry.Length;
+        var seen = new bool[256];
+        foreach (var entry in entries)
+        {
+            if (seen[entry.Symbol] || entry.Length is 0 or > 15)
+                throw new ArgumentException("Повтор символу або некоректна довжина.", nameof(entries));
+            seen[entry.Symbol] = true;
+            lengths[entry.Symbol] = entry.Length;
+        }
         return FromLengths(lengths);
     }
 
@@ -69,8 +76,13 @@ public sealed class CodeTable
     /// </summary>
     public int MeasureBits(ReadOnlySpan<byte> data)
     {
-        // TODO(S3)
-        throw new NotImplementedException("CodeTable.MeasureBits");
+        int total = 0;
+        foreach (byte symbol in data)
+        {
+            if (_lengths[symbol] == 0) return -1;
+            total = checked(total + _lengths[symbol]);
+        }
+        return total;
     }
 
     /// <summary>
@@ -79,17 +91,19 @@ public sealed class CodeTable
     /// </summary>
     public bool TryDecodeNext(BitReader reader, out byte symbol)
     {
-        // TODO(S3). Канонічні коди дозволяють декодувати без дерева:
-        //
-        //   code = 0
-        //   для L = 1..15:
-        //       code = (code << 1) | наступний_біт
-        //       якщо існують символи довжини L і
-        //          code - перший_код_довжини_L < кількість_символів_довжини_L:
-        //             повернути символ за зміщенням
-        //
-        // Перший код довжини L і зміщення обчислюються так само, як у
-        // CanonicalCodes.Assign. Символи всередині довжини йдуть за зростанням.
-        throw new NotImplementedException("CodeTable.TryDecodeNext");
+        uint code = 0;
+        for (int length = 1; length <= CanonicalCodes.MaxCodeLength; length++)
+        {
+            if (!reader.TryReadBit(out int bit)) break;
+            code = (code << 1) | (uint)bit;
+            foreach (var entry in Entries)
+                if (entry.Length == length && _codes[entry.Symbol] == code)
+                {
+                    symbol = entry.Symbol;
+                    return true;
+                }
+        }
+        symbol = 0;
+        return false;
     }
 }

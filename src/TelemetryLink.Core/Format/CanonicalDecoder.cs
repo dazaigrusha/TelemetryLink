@@ -22,8 +22,15 @@ public static class CanonicalDecoder
         int symbolCount,
         out byte[] symbols)
     {
-        // TODO(S3): symbolCount разів викликати table.TryDecodeNext.
-        // Жодного винятку: невдача — це RejectionCode.E_CODE.
-        throw new NotImplementedException("CanonicalDecoder.TryDecode");
+        symbols = [];
+        if (symbolCount < 0 || (long)symbolCount > (long)bitstream.Length * 8) return RejectionCode.E_CODE;
+        var reader = new BitReader(bitstream);
+        var result = new byte[symbolCount];
+        for (int i = 0; i < symbolCount; i++)
+            if (!table.TryDecodeNext(reader, out result[i])) return RejectionCode.E_CODE;
+        if (reader.BitLength - reader.BitPosition > 7 || !reader.RemainingBitsAreZero())
+            return RejectionCode.E_CODE;
+        symbols = result;
+        return RejectionCode.None;
     }
 }

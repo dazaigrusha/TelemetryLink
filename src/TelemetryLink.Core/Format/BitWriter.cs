@@ -18,24 +18,32 @@ public sealed class BitWriter
 
     public void WriteBit(int bit)
     {
-        // TODO(S1): додати біт до поточного байта; коли назбиралося 8 —
-        // відправити байт у _bytes і почати новий.
-        throw new NotImplementedException("BitWriter.WriteBit");
+        if (bit is not (0 or 1)) throw new ArgumentOutOfRangeException(nameof(bit));
+        _current = (byte)((_current << 1) | bit);
+        _filledBits++;
+        BitCount++;
+        if (_filledBits == 8)
+        {
+            _bytes.Add(_current);
+            _current = 0;
+            _filledBits = 0;
+        }
     }
 
     /// <summary>Записує count молодших бітів значення, СТАРШИМИ ВПЕРЕД.</summary>
     public void WriteBits(uint value, int count)
     {
-        // TODO(S1): перебрати біти від (count-1) до 0 і викликати WriteBit.
-        // Пастка: порядок бітів. Спочатку найстарший біт коду.
-        throw new NotImplementedException("BitWriter.WriteBits");
+        if (count < 0 || count > 32) throw new ArgumentOutOfRangeException(nameof(count));
+        for (int i = count - 1; i >= 0; i--) WriteBit((int)((value >> i) & 1));
     }
 
     /// <summary>Завершує потік, доповнивши останній байт НУЛЯМИ.</summary>
     public byte[] ToArray()
     {
-        // TODO(S1): якщо поточний байт неповний, зсунути його вліво
-        // на (8 - _filledBits) і дописати.
-        throw new NotImplementedException("BitWriter.ToArray");
+        // Знімок не змінює стан: повторний виклик і подальший запис безпечні.
+        var result = new byte[_bytes.Count + (_filledBits > 0 ? 1 : 0)];
+        _bytes.CopyTo(result);
+        if (_filledBits > 0) result[^1] = (byte)(_current << (8 - _filledBits));
+        return result;
     }
 }

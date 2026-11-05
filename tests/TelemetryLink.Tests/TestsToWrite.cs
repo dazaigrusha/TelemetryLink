@@ -15,36 +15,6 @@ namespace TelemetryLink.Tests;
 /// Категорії позначені в назві файла-групи:
 ///   [С] стандартний   [К] крайній   [Х] хибний   [І] інваріант
 /// </summary>
-public class BitIoTests
-{
-    [Fact(Skip = "TODO(S1) [С]: перший біт стає 0x80")] public void WriteBits_PacksMostSignificantBitFirst() { }
-    [Fact(Skip = "TODO(S1) [С]: приклад §7 → 0C E6 DF 90")] public void SpecificationExample_ProducesExpectedBytes() { }
-    [Fact(Skip = "TODO(S1) [С]: записане читається назад у тому ж порядку")] public void ReadBit_ReturnsSameSequenceThatWasWritten() { }
-    [Fact(Skip = "TODO(S1) [К]: останній байт доповнюється нулями")] public void LastByte_IsPaddedWithZeros() { }
-    [Fact(Skip = "TODO(S1) [К]: нічого не записано → порожній масив")] public void NoBitsWritten_ProducesEmptyArray() { }
-    [Fact(Skip = "TODO(S1) [Х]: читання за межами потоку повертає false")] public void TryReadBit_PastEndOfStream_ReturnsFalse() { }
-    [Fact(Skip = "TODO(S1) [Х]: ненульове доповнення виявляється")] public void RemainingBitsAreZero_DetectsNonZeroPadding() { }
-}
-
-public class CanonicalCodesTests
-{
-    [Fact(Skip = "TODO(S3) [С]: приклад §7")] public void Assign_MatchesSpecificationExample() { }
-    [Fact(Skip = "TODO(S3) [І]: однакова довжина → коди за зростанням символу")] public void EqualLengths_GetCodesInAscendingSymbolOrder() { }
-    [Fact(Skip = "TODO(S3) [К]: порожні довжини")] public void Assign_EmptyLengths_ProducesNoCodes() { }
-    [Fact(Skip = "TODO(S3) [Х]: довжина 16 недопустима")] public void Assign_LengthAbove15_Throws() { }
-}
-
-public class PayloadTests
-{
-    [Fact(Skip = "TODO(S1) [С]: запис і читання навантаження")] public void WriteThenRead_RestoresAllSections() { }
-    [Fact(Skip = "TODO(S1) [К]: frame_count = 0 (кейс C1 №2)")] public void RoundTrip_ZeroFrames_Succeeds() { }
-    [Fact(Skip = "TODO(S1) [Х]: reserved != 0 → E_PAYLOAD")] public void Read_NonZeroReserved_ReturnsEPayload() { }
-    [Fact(Skip = "TODO(S1) [Х]: невідомий біт flags → E_PAYLOAD")] public void Read_UnknownFlagBit_ReturnsEPayload() { }
-    [Fact(Skip = "TODO(S1) [Х]: чуже розширення (flags & 0x03) → E_PAYLOAD")] public void Read_TeamExtensionFlag_ReturnsEPayload() { }
-    [Fact(Skip = "TODO(S1) [І]: symbol_count = 12 × frame_count")] public void Read_SymbolCountViolatesInvariant_ReturnsEPayload() { }
-    [Fact(Skip = "TODO(S1) [Х]: зайві байти в кінці → E_PAYLOAD")] public void Read_ExtraTrailingBytes_ReturnsEPayload() { }
-}
-
 public class PacketTests
 {
     [Fact(Skip = "TODO(S2) [С]: пакет проходить туди й назад побайтово")] public void BuildThenRead_RestoresFramesByteForByte() { }
