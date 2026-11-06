@@ -25,7 +25,9 @@ public sealed class Receiver
 
     public ReceiveResult Accept(ReadOnlySpan<byte> packet)
     {
-        // TODO(S2): викликати PacketReader.Read і полічити результат.
-        throw new NotImplementedException("Receiver.Accept");
+        var result = PacketReader.Read(packet, _keys);
+        if (result.IsAccepted) AcceptedCount++;
+        else _rejections[result.Code] = _rejections.GetValueOrDefault(result.Code) + 1;
+        return result;
     }
 }

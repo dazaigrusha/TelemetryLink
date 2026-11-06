@@ -18,23 +18,36 @@ namespace TelemetryLink.Core.Metrics;
 /// </summary>
 public static class QualityMetric
 {
-    // TODO(S6). Три однорядкові формули і одна згортка. Пастки — у крайніх
-    // випадках, і саме вони перевіряються тестами:
-    //   • B_ref + B_sent == 0        не ділити на нуль
-    //   • критичних кадрів у сеансі немає  → R = 1, а не NaN
-    //   • миттєвий прогін (t = 0)    → T = 1
-
     public static double TransmissionEfficiency(long referenceBits, long sentBits)
-        => throw new NotImplementedException("QualityMetric.TransmissionEfficiency");
+    {
+        if (referenceBits < 0 || sentBits < 0) throw new ArgumentOutOfRangeException(nameof(referenceBits));
+        return referenceBits == 0 && sentBits == 0 ? 1.0
+            : referenceBits / ((double)referenceBits + sentBits);
+    }
 
     public static double CriticalRecovery(int recoveredCritical, int totalCritical)
-        => throw new NotImplementedException("QualityMetric.CriticalRecovery");
+    {
+        if (totalCritical < 0 || recoveredCritical < 0 || recoveredCritical > totalCritical)
+            throw new ArgumentOutOfRangeException(nameof(recoveredCritical));
+        return totalCritical == 0 ? 1.0 : (double)recoveredCritical / totalCritical;
+    }
 
     public static double Speed(double referenceSeconds, double elapsedSeconds)
-        => throw new NotImplementedException("QualityMetric.Speed");
+    {
+        if (!double.IsFinite(referenceSeconds) || referenceSeconds <= 0
+            || !double.IsFinite(elapsedSeconds) || elapsedSeconds < 0)
+            throw new ArgumentOutOfRangeException(nameof(elapsedSeconds));
+        return referenceSeconds / (referenceSeconds + elapsedSeconds);
+    }
 
     public static double Combine(TeamConfig config, double s, double r, double t)
-        => throw new NotImplementedException("QualityMetric.Combine");
+    {
+        if (new[] { s, r, t }.Any(v => !double.IsFinite(v) || v < 0 || v > 1))
+            throw new ArgumentOutOfRangeException(nameof(s));
+        // За відсутності critical у сеансі CriticalRecovery повертає 1.
+        if (r == 0) return 0;
+        return config.Alpha * s + config.Beta * r + config.Gamma * t;
+    }
 }
 
 /// <summary>Підсумок одного повного прогону. Усе, що потрапляє у звіт і в CSV.</summary>

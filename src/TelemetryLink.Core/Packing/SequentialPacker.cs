@@ -2,27 +2,23 @@ using TelemetryLink.Core.Domain;
 
 namespace TelemetryLink.Core.Packing;
 
-/// <summary>
-/// Найпростіший пакувальник: бере кадри в порядку надходження і зупиняється
-/// на першому, який не вміщається. Нічого не оптимізує і не переставляє.
-///
-/// КРОК S3. Це ПЕРША робоча версія тракту: до Чекпоінту 1 система має бути
-/// наскрізною і давати базове Q, а рюкзака ще немає — його місце тимчасово
-/// займає цей клас. Оскільки він реалізує той самий IFramePacker, заміна на
-/// ДП на кроці S4 не торкнеться ні передавача, ні формату, ні CLI.
-///
-/// Далі він лишається базовою лінією «без пакування взагалі»: різниця між
-/// sequential і dp показує, скільки дає саме вибір кадрів.
-/// </summary>
+/// <summary>Базовий вибір: кадри підряд до першого, який не вміщається.</summary>
 public sealed class SequentialPacker : IFramePacker
 {
     public string Name => "sequential";
 
     public IReadOnlyList<int> Select(IReadOnlyList<FrameCandidate> candidates, int capacityBits)
     {
-        // TODO(S3): брати кадри підряд, поки сумарна вага не перевищує місткість.
-        // Зупинитися на першому, що не влазить (саме break, а не continue —
-        // це наївна версія, і різниця з жадібним варіантом має бути видимою).
-        throw new NotImplementedException("SequentialPacker.Select");
+        var result = new List<int>();
+        if (capacityBits <= 0) return result;
+        int remaining = capacityBits;
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            if (candidates[i].WeightBits < 0) throw new ArgumentException("Вага кадру не може бути від'ємною.");
+            if (candidates[i].WeightBits > remaining) break;
+            result.Add(i);
+            remaining -= candidates[i].WeightBits;
+        }
+        return result;
     }
 }

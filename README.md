@@ -8,16 +8,22 @@
 
 ---
 
-## Поточний стан — частина 4: дерево Гаффмана та стиснення
+## Поточний стан — частина 5: наскрізний тракт і метрика Q
 
-Основа — частина S2 на .NET 10, до адаптації під VS 2022. Реалізовано дерево через PriorityQueue, детерміновані нічиї, обмеження довжин до 15 біт та кодування. Побайтова перевірка стиснення всього сеансу:
+.NET 10; файл рішення — TelemetryLink.slnx. S3 завершено: передавач пакує кадри, шифрує, передає через незмінену модель каналу, приймач перевіряє HMAC і відновлює кадри; звіт містить S, R, T, Q. Типовий пакувальник і планувальник поки sequential, класифікатор — majority.
 
 ```bash
+dotnet run --project src/TelemetryLink.Cli -- run --scenario calm
+dotnet run --project src/TelemetryLink.Cli -- run --scenario working --out results/working.csv
+dotnet run --project src/TelemetryLink.Cli -- run --scenario emergency
+dotnet run --project src/TelemetryLink.Cli -- compare --vary codec=none,huffman --scenario calm --out results/codecs.csv
 dotnet run --project src/TelemetryLink.Cli -- compress
-dotnet run --project src/TelemetryLink.Cli -- compress --session data/session.bin --out compression.json
+dotnet run --project src/TelemetryLink.Cli -- verify
 ```
 
-Команда показує потік, розмір таблиці, економію повного навантаження та перевіряє точне відновлення. Це діагностика кодека без передавання каналом. Інструкція оновлення та комміт — у `STEP-04.md`. Повний S3 ще не завершений: інтеграція тракту та вимірювання Q попереду. Нижче збережена довідка початкового шаблону.
+Для відкритого seed: calm відновлює 3000/3000 кадрів, working — 2950/3000, emergency — 1073/3000. Аварійний поріг втрати critical поки не досягнуто. Числа й час прикладу збережено у BASELINE-S3.csv; T і Q залежать від виміряного часу. Деталі та комміт — у STEP-05.md.
+
+Рюкзак dp/greedy/brute, жадібний планувальник, навчання MLP і оптимізатори ще не реалізовані. Команда compare без --vary та --ablation поки звертаються до наступних етапів. Весь набір dotnet test ще містить їхні тести й заглушки; для поточної частини використовуйте фільтр у STEP-05.md. Нижче збережена довідка початкового шаблону, стан якої може описувати початок роботи.
 
 ## Перший запуск
 

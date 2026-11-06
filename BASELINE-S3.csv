@@ -1,0 +1,4 @@
+scenario,codec,packer,scheduler,classifier,frames,critical,recovered_critical,reference_bits,sent_bits,elapsed_ms,packets_built,packets_accepted,value,delivered_value,compression_ratio,S,R,T,Q
+calm,huffman,sequential,sequential,majority,3000,300,300,288000,449464,541.6,111,111,4500,4500,0.6408,0.390528,1.000000,0.973632,0.691309
+working,huffman,sequential,sequential,majority,3000,300,294,288000,449464,476.8,111,109,4500,4420,0.6408,0.390528,0.980000,0.976717,0.684771
+emergency,huffman,sequential,sequential,majority,3000,300,108,288000,201128,340.1,111,40,4500,1613,0.6408,0.588803,0.360000,0.983279,0.567893

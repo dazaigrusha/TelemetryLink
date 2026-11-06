@@ -34,8 +34,14 @@ public static class ReportRenderer
 
         Console.WriteLine();
         Console.WriteLine($"  S = {report.S:F4}    R = {report.R:F4}    T = {report.T:F4}");
-        Console.WriteLine($"  Q = {config.Alpha}·{report.S:F4} + {config.Beta}·{report.R:F4} + " +
-                          $"{config.Gamma}·{report.T:F4} = {report.Q:F4}");
+        if (!report.ExactRestore)
+            Console.WriteLine("  Q = 0: порушено точне відновлення доставлених даних.");
+        else if (report.CriticalFrameCount > 0 && report.RecoveredCriticalFrameCount == 0)
+            Console.WriteLine("  Q = 0: не відновлено жодного критичного кадру.");
+        else
+            Console.WriteLine($"  Q = {config.Alpha}·{report.S:F4} + {config.Beta}·{report.R:F4} + " +
+                              $"{config.Gamma}·{report.T:F4} = {report.Q:F4}");
+        Console.WriteLine($"  Обчислення: {report.ElapsedSeconds:F4} с; зайнятість каналу: {report.Channel.ChannelTimeSeconds:F4} с.");
         Console.WriteLine();
 
         double threshold = config.CriticalLossThreshold(report.ScenarioName);
