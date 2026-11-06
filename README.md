@@ -8,22 +8,23 @@
 
 ---
 
-## Поточний стан — частина 5: наскрізний тракт і метрика Q
+## Поточний стан — частина 6: задача рюкзака
 
-.NET 10; файл рішення — TelemetryLink.slnx. S3 завершено: передавач пакує кадри, шифрує, передає через незмінену модель каналу, приймач перевіряє HMAC і відновлює кадри; звіт містить S, R, T, Q. Типовий пакувальник і планувальник поки sequential, класифікатор — majority.
+.NET 10, рішення TelemetryLink.slnx. Додано точний повний перебір (brute, до 20 кадрів), точний DP-рюкзак та жадібну евристику за цінністю/вагою. Типовий пакувальник тепер dp; планувальник лишається sequential, класифікатор — majority.
 
 ```bash
 dotnet run --project src/TelemetryLink.Cli -- run --scenario calm
-dotnet run --project src/TelemetryLink.Cli -- run --scenario working --out results/working.csv
-dotnet run --project src/TelemetryLink.Cli -- run --scenario emergency
-dotnet run --project src/TelemetryLink.Cli -- compare --vary codec=none,huffman --scenario calm --out results/codecs.csv
-dotnet run --project src/TelemetryLink.Cli -- compress
+dotnet run --project src/TelemetryLink.Cli -- run --scenario emergency --packer dp
+dotnet run --project src/TelemetryLink.Cli -- compare --vary packer=sequential,greedy,dp --scenario calm,working,emergency --out results/packers.csv
+dotnet run --project src/TelemetryLink.Cli -- compare --vary packer=brute,dp,greedy --window 8 --scenario calm --out results/small_window.csv
 dotnet run --project src/TelemetryLink.Cli -- verify
 ```
 
-Для відкритого seed: calm відновлює 3000/3000 кадрів, working — 2950/3000, emergency — 1073/3000. Аварійний поріг втрати critical поки не досягнуто. Числа й час прикладу збережено у BASELINE-S3.csv; T і Q залежать від виміряного часу. Деталі та комміт — у STEP-05.md.
+Перебір — еталон для малих наборів, а не основний метод для 64-кадрового вікна. Для brute обов'язково задайте --window <= 20. Деталі, приклад, результати та команда комміту — у STEP-06.md.
 
-Рюкзак dp/greedy/brute, жадібний планувальник, навчання MLP і оптимізатори ще не реалізовані. Команда compare без --vary та --ablation поки звертаються до наступних етапів. Весь набір dotnet test ще містить їхні тести й заглушки; для поточної частини використовуйте фільтр у STEP-05.md. Нижче збережена довідка початкового шаблону, стан якої може описувати початок роботи.
+ДП максимізує цінність одного фіксованого набору кандидатів при заданій місткості. Це не гарантує найвищий підсумковий Q у каналі: на нього впливають наступні вікна, втрати, порядок пакетів і час обчислень.
+
+Жадібний планувальник, навчання MLP та оптимізатори ще попереду. Повний набір dotnet test містить тести майбутніх етапів; поточний фільтр є у STEP-06.md. BASELINE-S3.csv збережений як історична база частини 5 із sequential. Нижче — довідка початкового шаблону.
 
 ## Перший запуск
 

@@ -15,30 +15,6 @@ namespace TelemetryLink.Tests;
 /// Категорії позначені в назві файла-групи:
 ///   [С] стандартний   [К] крайній   [Х] хибний   [І] інваріант
 /// </summary>
-public class PackerTests
-{
-    [Fact(Skip = "TODO(S4) [І]: ДП збігається з повним перебором на 200 наборах")] public void DynamicProgramming_MatchesBruteForce() { }
-    [Fact(Skip = "TODO(S4) [І]: ДП не гірше за жадібний (кейс C1 №8)")] public void DynamicProgramming_NeverWorseThanGreedy() { }
-    [Fact(Skip = "TODO(S4) [І]: жоден пакувальник не перевищує місткість")] public void NoPacker_ExceedsCapacity() { }
-    [Fact(Skip = "TODO(S4) [І]: індекси зростають і не повторюються")] public void Select_ReturnsIndexesInAscendingOrder() { }
-    [Fact(Skip = "TODO(S4) [С]: конкретний набір, де жадібний програє — потрібен на захисті")] public void Greedy_IsSuboptimal_OnKnownCounterexample() { }
-    [Fact(Skip = "TODO(S3) [С]: наївний зупиняється на важкому кадрі, жадібний його пропускає")] public void Sequential_StopsAtFirstFrameThatDoesNotFit() { }
-    [Fact(Skip = "TODO(S4) [К]: порожній список кандидатів")] public void Select_EmptyCandidates_ReturnsEmpty() { }
-    [Fact(Skip = "TODO(S4) [К]: місткість 0 і від'ємна")] public void Select_NonPositiveCapacity_ReturnsEmpty() { }
-    [Fact(Skip = "TODO(S4) [К]: єдиний кадр важчий за місткість")] public void Select_SingleItemHeavierThanCapacity_ReturnsEmpty() { }
-    [Fact(Skip = "TODO(S4) [К]: усе влазить → беремо все")] public void Select_AllItemsFit_ReturnsAll() { }
-}
-
-public class TransmitterTests
-{
-    [Fact(Skip = "TODO(S4) [І]: жоден кадр не загублено і не подвоєно")] public void BuildPackets_NoFrameIsLostOrDuplicated() { }
-    [Fact(Skip = "TODO(S4) [І]: кожен пакет вкладається в max_packet_bytes")] public void BuildPackets_EveryPacketFitsMaxPacketBytes() { }
-    [Fact(Skip = "TODO(S4) [С]: кожен пакет читається назад")] public void BuildPackets_EveryPacketRoundTrips() { }
-    [Fact(Skip = "TODO(S4) [К]: порожній сеанс")] public void BuildPackets_EmptySession_DoesNotThrow() { }
-    [Fact(Skip = "TODO(S4) [К]: один кадр")] public void BuildPackets_SingleFrame_ProducesOnePacket() { }
-    [Fact(Skip = "TODO(S4) [К]: дуже малий ліміт пакета → сирий режим, а не падіння")] public void BuildPackets_TinyPacketLimit_FallsBackToRawMode() { }
-}
-
 public class SchedulerTests
 {
     [Fact(Skip = "TODO(S5) [С]: послідовний зберігає порядок")] public void Sequential_PreservesInputOrder() { }

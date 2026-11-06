@@ -2,27 +2,37 @@ using TelemetryLink.Core.Domain;
 
 namespace TelemetryLink.Core.Packing;
 
-/// <summary>
-/// Повний перебір усіх 2^n підмножин.
-///
-/// У тракті НЕ використовується — він існує заради тестів. Це найпростіший
-/// спосіб довести, що ДП реалізовано правильно: на маленьких наборах точний
-/// перебір і ДП мають давати ОДНАКОВУ цінність.
-///
-/// КРОК S4, пишеться ПЕРШИМ із трьох пакувальників.
-/// </summary>
+/// <summary>Точний еталон: повний перебір до 20 кандидатів. Складність O(n*2^n).</summary>
 public sealed class BruteForcePacker : IFramePacker
 {
-    /// <summary>Більше — уже мільйони підмножин; для тестів достатньо 20.</summary>
     public const int MaxItems = 20;
-
     public string Name => "brute";
 
     public IReadOnlyList<int> Select(IReadOnlyList<FrameCandidate> candidates, int capacityBits)
     {
-        // TODO(S4): перебрати маски від 1 до 2^n − 1, відкинути ті,
-        // що не вкладаються в місткість, запам'ятати найціннішу.
-        // Понад MaxItems кадрів — ArgumentException.
-        throw new NotImplementedException("BruteForcePacker.Select");
+        PackerInput.Validate(candidates);
+        if (candidates.Count > MaxItems)
+            throw new ArgumentException($"Повний перебір підтримує до {MaxItems} кандидатів. Для CLI задайте --window 16.", nameof(candidates));
+        if (capacityBits <= 0 || candidates.Count == 0) return [];
+        long bestValue = 0;
+        uint bestMask = 0;
+        uint limit = 1u << candidates.Count;
+        // Кожна маска однозначно задає підмножину; кадр береться максимум раз.
+        for (uint mask = 1; mask < limit; mask++)
+        {
+            long weight = 0, value = 0;
+            for (int i = 0; i < candidates.Count; i++)
+                if ((mask & (1u << i)) != 0)
+                {
+                    weight += candidates[i].WeightBits;
+                    value += candidates[i].Value;
+                }
+            if (weight <= capacityBits && value > bestValue)
+            {
+                bestValue = value;
+                bestMask = mask;
+            }
+        }
+        return Enumerable.Range(0, candidates.Count).Where(i => (bestMask & (1u << i)) != 0).ToArray();
     }
 }

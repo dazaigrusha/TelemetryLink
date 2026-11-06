@@ -56,7 +56,7 @@ public sealed class CommandContext
         Tuning? tuning = null) => new()
         {
             Codec = AlgorithmCatalog.Codec(codec ?? _options.Value("codec", "huffman")),
-            Packer = AlgorithmCatalog.Packer(packer ?? _options.Value("packer", "sequential")),
+            Packer = AlgorithmCatalog.Packer(packer ?? _options.Value("packer", "dp")),
             Scheduler = AlgorithmCatalog.Scheduler(scheduler ?? _options.Value("scheduler", "sequential")),
             Classifier = AlgorithmCatalog.Classifier(
                 classifier ?? _options.Value("classifier", "majority"), LoadModel()),
