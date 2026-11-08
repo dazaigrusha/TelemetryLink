@@ -15,22 +15,6 @@ namespace TelemetryLink.Tests;
 /// Категорії позначені в назві файла-групи:
 ///   [С] стандартний   [К] крайній   [Х] хибний   [І] інваріант
 /// </summary>
-public class SchedulerTests
-{
-    [Fact(Skip = "TODO(S5) [С]: послідовний зберігає порядок")] public void Sequential_PreservesInputOrder() { }
-    [Fact(Skip = "TODO(S5) [С]: жадібний ставить найщільніший першим")] public void ValueDensity_PutsHighestDensityFirst() { }
-    [Fact(Skip = "TODO(S5) [К]: порожній список")] public void Order_EmptyList_ReturnsEmpty() { }
-    [Fact(Skip = "TODO(S5) [І]: результат — перестановка входу")] public void Order_IsPermutationOfInput() { }
-}
-
-public class ChannelTests
-{
-    [Fact(Skip = "TODO(S5) [К]: спокійний сценарій нічого не втрачає")] public void CalmScenario_LosesNothing() { }
-    [Fact(Skip = "TODO(S5) [І]: той самий seed → той самий розклад втрат")] public void SameSeed_ProducesSameLossSequence() { }
-    [Fact(Skip = "TODO(S5) [С]: p_gb = loss / (loss + B(1-loss)) = 0,0556 для аварійного")] public void BadStateProbability_UsesCorrectFormula() { }
-    [Fact(Skip = "TODO(S5) [К]: пакет поза бюджетом не займає смугу")] public void PacketOverBudget_DoesNotConsumeBandwidth() { }
-}
-
 public class MetricsTests
 {
     [Fact(Skip = "TODO(S6) [С]: Q — зважена сума компонент")] public void Q_EqualsWeightedSum_OfComponents() { }

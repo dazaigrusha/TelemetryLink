@@ -8,23 +8,20 @@
 
 ---
 
-## Поточний стан — частина 6: задача рюкзака
+## Поточний стан — частина 7: жадібний планувальник
 
-.NET 10, рішення TelemetryLink.slnx. Додано точний повний перебір (brute, до 20 кадрів), точний DP-рюкзак та жадібну евристику за цінністю/вагою. Типовий пакувальник тепер dp; планувальник лишається sequential, класифікатор — majority.
+.NET 10, рішення TelemetryLink.slnx. Додано ValueDensityScheduler: передає пакети за спаданням цінності на байт, при однаковій щільності — за номером пакета. Номери та байти пакетів залишаються незмінними. Типова конфігурація тепер huffman + dp + greedy + majority.
 
 ```bash
 dotnet run --project src/TelemetryLink.Cli -- run --scenario calm
-dotnet run --project src/TelemetryLink.Cli -- run --scenario emergency --packer dp
-dotnet run --project src/TelemetryLink.Cli -- compare --vary packer=sequential,greedy,dp --scenario calm,working,emergency --out results/packers.csv
-dotnet run --project src/TelemetryLink.Cli -- compare --vary packer=brute,dp,greedy --window 8 --scenario calm --out results/small_window.csv
+dotnet run --project src/TelemetryLink.Cli -- run --scenario emergency --scheduler greedy
+dotnet run --project src/TelemetryLink.Cli -- compare --vary scheduler=sequential,greedy --scenario calm,working,emergency --out results/schedulers.csv
 dotnet run --project src/TelemetryLink.Cli -- verify
 ```
 
-Перебір — еталон для малих наборів, а не основний метод для 64-кадрового вікна. Для brute обов'язково задайте --window <= 20. Деталі, приклад, результати та команда комміту — у STEP-06.md.
+Для порівняння планувальників решта компонентів і seed однакові. Жадібний порядок — евристика, а не гарантія найвищого Q для будь-якого сценарію. Деталі, результати та комміт — у STEP-07.md.
 
-ДП максимізує цінність одного фіксованого набору кандидатів при заданій місткості. Це не гарантує найвищий підсумковий Q у каналі: на нього впливають наступні вікна, втрати, порядок пакетів і час обчислень.
-
-Жадібний планувальник, навчання MLP та оптимізатори ще попереду. Повний набір dotnet test містить тести майбутніх етапів; поточний фільтр є у STEP-06.md. BASELINE-S3.csv збережений як історична база частини 5 із sequential. Нижче — довідка початкового шаблону.
+Навчання MLP, оптимізатори та фінальні експерименти ще попереду. Старі CSV залишено для історичного порівняння. Повний dotnet test містить заглушки наступних етапів; поточний фільтр наведений у STEP-07.md. Нижче — довідка початкового шаблону.
 
 ## Перший запуск
 
