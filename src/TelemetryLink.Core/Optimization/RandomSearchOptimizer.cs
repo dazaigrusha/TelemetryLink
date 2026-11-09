@@ -1,39 +1,35 @@
 using TelemetryLink.Core.Configuration;
-
 namespace TelemetryLink.Core.Optimization;
 
-/// <summary>
-/// Випадковий пошук: рівномірно кидає точки в простір параметрів і запам'ятовує
-/// найкращу.
-///
-/// Писати його треба ПЕРШИМ, до генетичного алгоритму:
-/// 1) він перевіряє, що функція пристосованості взагалі працює і що простір
-///    параметрів заданий правильно — без селекції й мутацій, які можуть
-///    сховати помилку;
-/// 2) без нього немає з чим порівнювати ГА, а порівняння з базовою лінією —
-///    обов'язкова частина завдання.
-///
-/// Цілком нормальний результат — коли ГА не перевершує випадковий пошук.
-/// Провал настає тоді, коли студент не може пояснити, чому так сталося.
-///
-/// КРОК S8.
-/// </summary>
+/// <summary>Рівномірний пошук з рівно заданою кількістю викликів fitness.</summary>
 public sealed class RandomSearchOptimizer : IParameterOptimizer
 {
     public string Name => "random";
-
+    internal static double Evaluate(Func<Tuning, double> fitness, Tuning tuning)
+    {
+        double score = fitness(tuning);
+        if (!double.IsFinite(score)) throw new InvalidOperationException("Fitness має бути скінченним.");
+        return score;
+    }
     public OptimizationResult Optimize(Func<Tuning, double> fitness, int evaluationBudget, int seed)
     {
-        // TODO(S8): рівно evaluationBudget викликів fitness, не більше і не менше.
-        // Історію заповнюйте найкращим значенням на кожному кроці — це дасть
-        // криву для порівняння з ГА.
-        throw new NotImplementedException("RandomSearchOptimizer.Optimize");
+        ArgumentNullException.ThrowIfNull(fitness);
+        if (evaluationBudget < 1) throw new ArgumentOutOfRangeException(nameof(evaluationBudget));
+        var random = new Random(seed); Tuning? best = null; double bestScore = double.NegativeInfinity, sum = 0;
+        var history = new List<GenerationRecord>();
+        for (int i = 0; i < evaluationBudget; i++)
+        {
+            var candidate = RandomTuning(random); double score = Evaluate(fitness, candidate); sum += score;
+            if (best is null || score > bestScore) { best = candidate; bestScore = score; }
+            history.Add(new GenerationRecord(i, bestScore, sum / (i + 1)) { Evaluations = i + 1 });
+        }
+        return new(best!, bestScore, history.AsReadOnly(), evaluationBudget);
     }
-
-    /// <summary>Рівномірна випадкова точка в межах Tuning.Bounds.</summary>
     public static Tuning RandomTuning(Random random)
     {
-        // TODO(S8)
-        throw new NotImplementedException("RandomSearchOptimizer.RandomTuning");
+        ArgumentNullException.ThrowIfNull(random);
+        return new(random.Next((int)Tuning.Bounds[0].Low, (int)Tuning.Bounds[0].High + 1),
+            Tuning.Bounds[1].Low + random.NextDouble() * (Tuning.Bounds[1].High - Tuning.Bounds[1].Low),
+            Tuning.Bounds[2].Low + random.NextDouble() * (Tuning.Bounds[2].High - Tuning.Bounds[2].Low));
     }
 }

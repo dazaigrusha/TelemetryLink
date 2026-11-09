@@ -3,7 +3,10 @@ using TelemetryLink.Core.Configuration;
 namespace TelemetryLink.Core.Optimization;
 
 /// <summary>Запис про одне покоління — рядок журналу еволюції.</summary>
-public readonly record struct GenerationRecord(int Generation, double BestFitness, double MeanFitness);
+public readonly record struct GenerationRecord(int Generation, double BestFitness, double MeanFitness)
+{
+    public int Evaluations { get; init; }
+}
 
 /// <summary>Результат оптимізації.</summary>
 public sealed record OptimizationResult(

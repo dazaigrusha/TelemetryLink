@@ -1,0 +1,1398 @@
+{
+  "SchemaVersion": 1,
+  "CreatedUtc": "2026-11-09T00:44:29.1248127+00:00",
+  "BudgetPerOptimizer": 200,
+  "Seed": 1,
+  "ChannelSeed": 425243,
+  "Scenario": "emergency",
+  "Pipeline": "codec=huffman  packer=dp  scheduler=greedy  classifier=mlp",
+  "GeneticOptions": {
+    "PopulationSize": 12,
+    "TournamentSize": 3,
+    "MutationProbability": 0.2,
+    "MutationScale": 0.15,
+    "EliteCount": 1
+  },
+  "Bounds": [
+    {
+      "Gene": "\u0432\u0456\u043A\u043D\u043E \u043A\u0430\u043D\u0434\u0438\u0434\u0430\u0442\u0456\u0432",
+      "Low": 8,
+      "High": 64
+    },
+    {
+      "Gene": "\u043F\u043E\u0440\u0456\u0433 \u0441\u0442\u0438\u0441\u043D\u0435\u043D\u043D\u044F",
+      "Low": 0.3,
+      "High": 1.6
+    },
+    {
+      "Gene": "\u0432\u0430\u0433\u0430 \u043A\u0440\u0438\u0442\u0438\u0447\u043D\u043E\u0441\u0442\u0456",
+      "Low": 0,
+      "High": 3
+    }
+  ],
+  "Protocol": {
+    "Fitness": "full-session Q",
+    "FixedChannelSeed": true,
+    "FitnessIsDeterministic": false,
+    "Timing": "Q includes measured elapsed time; no guarantee of GA superiority",
+    "EliteReevaluation": false,
+    "RandomMean": "all samples so far",
+    "GeneticMean": "current population, including cached elites",
+    "PartialGeneration": "stop exactly at budget; retain elites",
+    "PopulationOne": "elitist (1\u002B1) strategy"
+  },
+  "Inputs": {
+    "Config": {
+      "FileName": "team_config.json",
+      "Sha256": "49ca1de019c0e3f2c6e644372b491efab21ba51dbe731ed3a88873f740019690"
+    },
+    "Session": {
+      "FileName": "session.csv",
+      "Sha256": "db5d92746846a9ee14c16eb59b5b97bd816a82bb39efb00e9ccfbd06ff67406f"
+    },
+    "Model": {
+      "FileName": "mlp.json",
+      "Sha256": "c77a300dc4649d93e58d7587d1f7ecac86d7849ab1881c6edf85b691d532f186"
+    }
+  },
+  "Results": [
+    {
+      "Optimizer": "random",
+      "Best": {
+        "WindowFrames": 41,
+        "CompressionThreshold": 0.7031219651005798,
+        "CriticalWeight": 2.9353089951608835
+      },
+      "BestFitness": 0.626224880615861,
+      "Evaluations": 200,
+      "History": [
+        {
+          "Generation": 0,
+          "BestFitness": 0.5959564630371005,
+          "MeanFitness": 0.5959564630371005,
+          "Evaluations": 1
+        },
+        {
+          "Generation": 1,
+          "BestFitness": 0.6071560437125931,
+          "MeanFitness": 0.6015562533748469,
+          "Evaluations": 2
+        },
+        {
+          "Generation": 2,
+          "BestFitness": 0.6071560437125931,
+          "MeanFitness": 0.5997855139252355,
+          "Evaluations": 3
+        },
+        {
+          "Generation": 3,
+          "BestFitness": 0.6149091998731119,
+          "MeanFitness": 0.6035664354122046,
+          "Evaluations": 4
+        },
+        {
+          "Generation": 4,
+          "BestFitness": 0.6149091998731119,
+          "MeanFitness": 0.6029772465982622,
+          "Evaluations": 5
+        },
+        {
+          "Generation": 5,
+          "BestFitness": 0.6149091998731119,
+          "MeanFitness": 0.6029485261887483,
+          "Evaluations": 6
+        },
+        {
+          "Generation": 6,
+          "BestFitness": 0.6149091998731119,
+          "MeanFitness": 0.6045561460598313,
+          "Evaluations": 7
+        },
+        {
+          "Generation": 7,
+          "BestFitness": 0.6149091998731119,
+          "MeanFitness": 0.6017140344205663,
+          "Evaluations": 8
+        },
+        {
+          "Generation": 8,
+          "BestFitness": 0.6149091998731119,
+          "MeanFitness": 0.598667445119647,
+          "Evaluations": 9
+        },
+        {
+          "Generation": 9,
+          "BestFitness": 0.6149091998731119,
+          "MeanFitness": 0.598861035141571,
+          "Evaluations": 10
+        },
+        {
+          "Generation": 10,
+          "BestFitness": 0.6149091998731119,
+          "MeanFitness": 0.6001688386578645,
+          "Evaluations": 11
+        },
+        {
+          "Generation": 11,
+          "BestFitness": 0.6149091998731119,
+          "MeanFitness": 0.5960048733732851,
+          "Evaluations": 12
+        },
+        {
+          "Generation": 12,
+          "BestFitness": 0.6149091998731119,
+          "MeanFitness": 0.5930272885954972,
+          "Evaluations": 13
+        },
+        {
+          "Generation": 13,
+          "BestFitness": 0.6155038249509801,
+          "MeanFitness": 0.5946327554780318,
+          "Evaluations": 14
+        },
+        {
+          "Generation": 14,
+          "BestFitness": 0.6155038249509801,
+          "MeanFitness": 0.5952473931937532,
+          "Evaluations": 15
+        },
+        {
+          "Generation": 15,
+          "BestFitness": 0.6155038249509801,
+          "MeanFitness": 0.5964224082937692,
+          "Evaluations": 16
+        },
+        {
+          "Generation": 16,
+          "BestFitness": 0.6155038249509801,
+          "MeanFitness": 0.5967114726885598,
+          "Evaluations": 17
+        },
+        {
+          "Generation": 17,
+          "BestFitness": 0.6155038249509801,
+          "MeanFitness": 0.596003048175226,
+          "Evaluations": 18
+        },
+        {
+          "Generation": 18,
+          "BestFitness": 0.6155038249509801,
+          "MeanFitness": 0.5962647662745338,
+          "Evaluations": 19
+        },
+        {
+          "Generation": 19,
+          "BestFitness": 0.6155038249509801,
+          "MeanFitness": 0.5961667569953886,
+          "Evaluations": 20
+        },
+        {
+          "Generation": 20,
+          "BestFitness": 0.6155038249509801,
+          "MeanFitness": 0.59690401042812,
+          "Evaluations": 21
+        },
+        {
+          "Generation": 21,
+          "BestFitness": 0.6155038249509801,
+          "MeanFitness": 0.5966829510724851,
+          "Evaluations": 22
+        },
+        {
+          "Generation": 22,
+          "BestFitness": 0.6210324910561054,
+          "MeanFitness": 0.5977416267239469,
+          "Evaluations": 23
+        },
+        {
+          "Generation": 23,
+          "BestFitness": 0.6210324910561054,
+          "MeanFitness": 0.5983299285350381,
+          "Evaluations": 24
+        },
+        {
+          "Generation": 24,
+          "BestFitness": 0.6210324910561054,
+          "MeanFitness": 0.5976732439542052,
+          "Evaluations": 25
+        },
+        {
+          "Generation": 25,
+          "BestFitness": 0.6210324910561054,
+          "MeanFitness": 0.5978750057014772,
+          "Evaluations": 26
+        },
+        {
+          "Generation": 26,
+          "BestFitness": 0.6210324910561054,
+          "MeanFitness": 0.5963457553937666,
+          "Evaluations": 27
+        },
+        {
+          "Generation": 27,
+          "BestFitness": 0.6210324910561054,
+          "MeanFitness": 0.5965297889677191,
+          "Evaluations": 28
+        },
+        {
+          "Generation": 28,
+          "BestFitness": 0.6210324910561054,
+          "MeanFitness": 0.5967378337104868,
+          "Evaluations": 29
+        },
+        {
+          "Generation": 29,
+          "BestFitness": 0.6210324910561054,
+          "MeanFitness": 0.5951116796468081,
+          "Evaluations": 30
+        },
+        {
+          "Generation": 30,
+          "BestFitness": 0.6210324910561054,
+          "MeanFitness": 0.5956239389848083,
+          "Evaluations": 31
+        },
+        {
+          "Generation": 31,
+          "BestFitness": 0.6210324910561054,
+          "MeanFitness": 0.5945342519351021,
+          "Evaluations": 32
+        },
+        {
+          "Generation": 32,
+          "BestFitness": 0.6210324910561054,
+          "MeanFitness": 0.5949087400514284,
+          "Evaluations": 33
+        },
+        {
+          "Generation": 33,
+          "BestFitness": 0.6210324910561054,
+          "MeanFitness": 0.5947567605914197,
+          "Evaluations": 34
+        },
+        {
+          "Generation": 34,
+          "BestFitness": 0.6210324910561054,
+          "MeanFitness": 0.5951528216963244,
+          "Evaluations": 35
+        },
+        {
+          "Generation": 35,
+          "BestFitness": 0.6210324910561054,
+          "MeanFitness": 0.5953844638290359,
+          "Evaluations": 36
+        },
+        {
+          "Generation": 36,
+          "BestFitness": 0.6210324910561054,
+          "MeanFitness": 0.5956681910351646,
+          "Evaluations": 37
+        },
+        {
+          "Generation": 37,
+          "BestFitness": 0.6210324910561054,
+          "MeanFitness": 0.5956746049272418,
+          "Evaluations": 38
+        },
+        {
+          "Generation": 38,
+          "BestFitness": 0.6210324910561054,
+          "MeanFitness": 0.5955922590185697,
+          "Evaluations": 39
+        },
+        {
+          "Generation": 39,
+          "BestFitness": 0.6210324910561054,
+          "MeanFitness": 0.595860044442579,
+          "Evaluations": 40
+        },
+        {
+          "Generation": 40,
+          "BestFitness": 0.6210324910561054,
+          "MeanFitness": 0.5962866166116512,
+          "Evaluations": 41
+        },
+        {
+          "Generation": 41,
+          "BestFitness": 0.6210324910561054,
+          "MeanFitness": 0.5958573886577377,
+          "Evaluations": 42
+        },
+        {
+          "Generation": 42,
+          "BestFitness": 0.6210324910561054,
+          "MeanFitness": 0.5955240376084704,
+          "Evaluations": 43
+        },
+        {
+          "Generation": 43,
+          "BestFitness": 0.6210324910561054,
+          "MeanFitness": 0.5954672767625852,
+          "Evaluations": 44
+        },
+        {
+          "Generation": 44,
+          "BestFitness": 0.6210324910561054,
+          "MeanFitness": 0.595706182281057,
+          "Evaluations": 45
+        },
+        {
+          "Generation": 45,
+          "BestFitness": 0.6210324910561054,
+          "MeanFitness": 0.5958883030609435,
+          "Evaluations": 46
+        },
+        {
+          "Generation": 46,
+          "BestFitness": 0.6210324910561054,
+          "MeanFitness": 0.5948804103042981,
+          "Evaluations": 47
+        },
+        {
+          "Generation": 47,
+          "BestFitness": 0.6210324910561054,
+          "MeanFitness": 0.5948037352634766,
+          "Evaluations": 48
+        },
+        {
+          "Generation": 48,
+          "BestFitness": 0.6210324910561054,
+          "MeanFitness": 0.5948896334493767,
+          "Evaluations": 49
+        },
+        {
+          "Generation": 49,
+          "BestFitness": 0.6210324910561054,
+          "MeanFitness": 0.5949956951141555,
+          "Evaluations": 50
+        },
+        {
+          "Generation": 50,
+          "BestFitness": 0.6210324910561054,
+          "MeanFitness": 0.5950942362565161,
+          "Evaluations": 51
+        },
+        {
+          "Generation": 51,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.5956208435869362,
+          "Evaluations": 52
+        },
+        {
+          "Generation": 52,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.5957267433097684,
+          "Evaluations": 53
+        },
+        {
+          "Generation": 53,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.5961380017970771,
+          "Evaluations": 54
+        },
+        {
+          "Generation": 54,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.5953819283795851,
+          "Evaluations": 55
+        },
+        {
+          "Generation": 55,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.5956612436255487,
+          "Evaluations": 56
+        },
+        {
+          "Generation": 56,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.595930582718776,
+          "Evaluations": 57
+        },
+        {
+          "Generation": 57,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.5959562221795947,
+          "Evaluations": 58
+        },
+        {
+          "Generation": 58,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.5959344706867427,
+          "Evaluations": 59
+        },
+        {
+          "Generation": 59,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.5961610785546206,
+          "Evaluations": 60
+        },
+        {
+          "Generation": 60,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.5961902676288922,
+          "Evaluations": 61
+        },
+        {
+          "Generation": 61,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.5964639205939088,
+          "Evaluations": 62
+        },
+        {
+          "Generation": 62,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.5965512494479012,
+          "Evaluations": 63
+        },
+        {
+          "Generation": 63,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.5966908282797938,
+          "Evaluations": 64
+        },
+        {
+          "Generation": 64,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.5968906754292675,
+          "Evaluations": 65
+        },
+        {
+          "Generation": 65,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.5970016170885389,
+          "Evaluations": 66
+        },
+        {
+          "Generation": 66,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.5968982569215248,
+          "Evaluations": 67
+        },
+        {
+          "Generation": 67,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.5968869688361268,
+          "Evaluations": 68
+        },
+        {
+          "Generation": 68,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.5967075883958884,
+          "Evaluations": 69
+        },
+        {
+          "Generation": 69,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.5963744638460298,
+          "Evaluations": 70
+        },
+        {
+          "Generation": 70,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.5960418406419884,
+          "Evaluations": 71
+        },
+        {
+          "Generation": 71,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.5951825814651479,
+          "Evaluations": 72
+        },
+        {
+          "Generation": 72,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.5947092184967202,
+          "Evaluations": 73
+        },
+        {
+          "Generation": 73,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.5950595400360092,
+          "Evaluations": 74
+        },
+        {
+          "Generation": 74,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.5952108390808907,
+          "Evaluations": 75
+        },
+        {
+          "Generation": 75,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.5954184367376085,
+          "Evaluations": 76
+        },
+        {
+          "Generation": 76,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.5948140805830672,
+          "Evaluations": 77
+        },
+        {
+          "Generation": 77,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.594918048608102,
+          "Evaluations": 78
+        },
+        {
+          "Generation": 78,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.5950381672692916,
+          "Evaluations": 79
+        },
+        {
+          "Generation": 79,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.5952231199313432,
+          "Evaluations": 80
+        },
+        {
+          "Generation": 80,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.5953045335955832,
+          "Evaluations": 81
+        },
+        {
+          "Generation": 81,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.5952686502636404,
+          "Evaluations": 82
+        },
+        {
+          "Generation": 82,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.595276469428156,
+          "Evaluations": 83
+        },
+        {
+          "Generation": 83,
+          "BestFitness": 0.6224778174383626,
+          "MeanFitness": 0.5955750072754845,
+          "Evaluations": 84
+        },
+        {
+          "Generation": 84,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5959219645641058,
+          "Evaluations": 85
+        },
+        {
+          "Generation": 85,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5958287978701946,
+          "Evaluations": 86
+        },
+        {
+          "Generation": 86,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5956764516719345,
+          "Evaluations": 87
+        },
+        {
+          "Generation": 87,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5955464944806278,
+          "Evaluations": 88
+        },
+        {
+          "Generation": 88,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5951562310485545,
+          "Evaluations": 89
+        },
+        {
+          "Generation": 89,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5952453948939578,
+          "Evaluations": 90
+        },
+        {
+          "Generation": 90,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5949659334311578,
+          "Evaluations": 91
+        },
+        {
+          "Generation": 91,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5946437893882174,
+          "Evaluations": 92
+        },
+        {
+          "Generation": 92,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5946571226892972,
+          "Evaluations": 93
+        },
+        {
+          "Generation": 93,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5945280119468351,
+          "Evaluations": 94
+        },
+        {
+          "Generation": 94,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5945018760366496,
+          "Evaluations": 95
+        },
+        {
+          "Generation": 95,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5945350751554301,
+          "Evaluations": 96
+        },
+        {
+          "Generation": 96,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5943813498849684,
+          "Evaluations": 97
+        },
+        {
+          "Generation": 97,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5946427431569196,
+          "Evaluations": 98
+        },
+        {
+          "Generation": 98,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5941039528852742,
+          "Evaluations": 99
+        },
+        {
+          "Generation": 99,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.594301480724491,
+          "Evaluations": 100
+        },
+        {
+          "Generation": 100,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5944785078759669,
+          "Evaluations": 101
+        },
+        {
+          "Generation": 101,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5943797281774026,
+          "Evaluations": 102
+        },
+        {
+          "Generation": 102,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5946146859960735,
+          "Evaluations": 103
+        },
+        {
+          "Generation": 103,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5947833530107213,
+          "Evaluations": 104
+        },
+        {
+          "Generation": 104,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5947937632725777,
+          "Evaluations": 105
+        },
+        {
+          "Generation": 105,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5948230206915488,
+          "Evaluations": 106
+        },
+        {
+          "Generation": 106,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5948766319868928,
+          "Evaluations": 107
+        },
+        {
+          "Generation": 107,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5947923721700493,
+          "Evaluations": 108
+        },
+        {
+          "Generation": 108,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5948628960001244,
+          "Evaluations": 109
+        },
+        {
+          "Generation": 109,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5945413147173861,
+          "Evaluations": 110
+        },
+        {
+          "Generation": 110,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5946578110584323,
+          "Evaluations": 111
+        },
+        {
+          "Generation": 111,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5946953941965779,
+          "Evaluations": 112
+        },
+        {
+          "Generation": 112,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.594829288583911,
+          "Evaluations": 113
+        },
+        {
+          "Generation": 113,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5948330265808403,
+          "Evaluations": 114
+        },
+        {
+          "Generation": 114,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.59466753746192,
+          "Evaluations": 115
+        },
+        {
+          "Generation": 115,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5946471481290281,
+          "Evaluations": 116
+        },
+        {
+          "Generation": 116,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5947671472844304,
+          "Evaluations": 117
+        },
+        {
+          "Generation": 117,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5942439797868602,
+          "Evaluations": 118
+        },
+        {
+          "Generation": 118,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5944067712355194,
+          "Evaluations": 119
+        },
+        {
+          "Generation": 119,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.594455819073613,
+          "Evaluations": 120
+        },
+        {
+          "Generation": 120,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5944915968817679,
+          "Evaluations": 121
+        },
+        {
+          "Generation": 121,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5945726262124126,
+          "Evaluations": 122
+        },
+        {
+          "Generation": 122,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5944208607566489,
+          "Evaluations": 123
+        },
+        {
+          "Generation": 123,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5945741135944421,
+          "Evaluations": 124
+        },
+        {
+          "Generation": 124,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5943747198952969,
+          "Evaluations": 125
+        },
+        {
+          "Generation": 125,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5944069057860911,
+          "Evaluations": 126
+        },
+        {
+          "Generation": 126,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5943971957890705,
+          "Evaluations": 127
+        },
+        {
+          "Generation": 127,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5944236224824051,
+          "Evaluations": 128
+        },
+        {
+          "Generation": 128,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.594652757563559,
+          "Evaluations": 129
+        },
+        {
+          "Generation": 129,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5943197319284138,
+          "Evaluations": 130
+        },
+        {
+          "Generation": 130,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5943137803698061,
+          "Evaluations": 131
+        },
+        {
+          "Generation": 131,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.594422543754476,
+          "Evaluations": 132
+        },
+        {
+          "Generation": 132,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5944682278789486,
+          "Evaluations": 133
+        },
+        {
+          "Generation": 133,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5943838031263378,
+          "Evaluations": 134
+        },
+        {
+          "Generation": 134,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5945105351484533,
+          "Evaluations": 135
+        },
+        {
+          "Generation": 135,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5945087288916875,
+          "Evaluations": 136
+        },
+        {
+          "Generation": 136,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5944298073035097,
+          "Evaluations": 137
+        },
+        {
+          "Generation": 137,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5945978454037114,
+          "Evaluations": 138
+        },
+        {
+          "Generation": 138,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5944033910938066,
+          "Evaluations": 139
+        },
+        {
+          "Generation": 139,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5945048787510938,
+          "Evaluations": 140
+        },
+        {
+          "Generation": 140,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5945640852356261,
+          "Evaluations": 141
+        },
+        {
+          "Generation": 141,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5945879416415141,
+          "Evaluations": 142
+        },
+        {
+          "Generation": 142,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5947153466738042,
+          "Evaluations": 143
+        },
+        {
+          "Generation": 143,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5947246322869816,
+          "Evaluations": 144
+        },
+        {
+          "Generation": 144,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5946824074751007,
+          "Evaluations": 145
+        },
+        {
+          "Generation": 145,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5948266392367552,
+          "Evaluations": 146
+        },
+        {
+          "Generation": 146,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5948807536951458,
+          "Evaluations": 147
+        },
+        {
+          "Generation": 147,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5950053537481991,
+          "Evaluations": 148
+        },
+        {
+          "Generation": 148,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5949985303591745,
+          "Evaluations": 149
+        },
+        {
+          "Generation": 149,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5951521472831923,
+          "Evaluations": 150
+        },
+        {
+          "Generation": 150,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5951771809635197,
+          "Evaluations": 151
+        },
+        {
+          "Generation": 151,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5952062122677217,
+          "Evaluations": 152
+        },
+        {
+          "Generation": 152,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5952050928453306,
+          "Evaluations": 153
+        },
+        {
+          "Generation": 153,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5952014620595628,
+          "Evaluations": 154
+        },
+        {
+          "Generation": 154,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5953034748062972,
+          "Evaluations": 155
+        },
+        {
+          "Generation": 155,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5953890176661886,
+          "Evaluations": 156
+        },
+        {
+          "Generation": 156,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5954376452788106,
+          "Evaluations": 157
+        },
+        {
+          "Generation": 157,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5956086056493471,
+          "Evaluations": 158
+        },
+        {
+          "Generation": 158,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5955761524053681,
+          "Evaluations": 159
+        },
+        {
+          "Generation": 159,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5956133510980374,
+          "Evaluations": 160
+        },
+        {
+          "Generation": 160,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5955717474536619,
+          "Evaluations": 161
+        },
+        {
+          "Generation": 161,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5955660581420477,
+          "Evaluations": 162
+        },
+        {
+          "Generation": 162,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5955176017421353,
+          "Evaluations": 163
+        },
+        {
+          "Generation": 163,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5955847149375599,
+          "Evaluations": 164
+        },
+        {
+          "Generation": 164,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5955651658948091,
+          "Evaluations": 165
+        },
+        {
+          "Generation": 165,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.595324414905771,
+          "Evaluations": 166
+        },
+        {
+          "Generation": 166,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5953317047703491,
+          "Evaluations": 167
+        },
+        {
+          "Generation": 167,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.595431916509533,
+          "Evaluations": 168
+        },
+        {
+          "Generation": 168,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5954379342665291,
+          "Evaluations": 169
+        },
+        {
+          "Generation": 169,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5956065519886724,
+          "Evaluations": 170
+        },
+        {
+          "Generation": 170,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5956417448046593,
+          "Evaluations": 171
+        },
+        {
+          "Generation": 171,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5956342443088425,
+          "Evaluations": 172
+        },
+        {
+          "Generation": 172,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5956912650359146,
+          "Evaluations": 173
+        },
+        {
+          "Generation": 173,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5957249477223793,
+          "Evaluations": 174
+        },
+        {
+          "Generation": 174,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5955035605084287,
+          "Evaluations": 175
+        },
+        {
+          "Generation": 175,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5956239950966563,
+          "Evaluations": 176
+        },
+        {
+          "Generation": 176,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5956869148231156,
+          "Evaluations": 177
+        },
+        {
+          "Generation": 177,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5957166885421162,
+          "Evaluations": 178
+        },
+        {
+          "Generation": 178,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5957000381625293,
+          "Evaluations": 179
+        },
+        {
+          "Generation": 179,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5958110206961682,
+          "Evaluations": 180
+        },
+        {
+          "Generation": 180,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5959188241412802,
+          "Evaluations": 181
+        },
+        {
+          "Generation": 181,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5959182709319494,
+          "Evaluations": 182
+        },
+        {
+          "Generation": 182,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5959813100676045,
+          "Evaluations": 183
+        },
+        {
+          "Generation": 183,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5961257991901107,
+          "Evaluations": 184
+        },
+        {
+          "Generation": 184,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.59621878106948,
+          "Evaluations": 185
+        },
+        {
+          "Generation": 185,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5962712789508835,
+          "Evaluations": 186
+        },
+        {
+          "Generation": 186,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5963126599769325,
+          "Evaluations": 187
+        },
+        {
+          "Generation": 187,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5963390199636439,
+          "Evaluations": 188
+        },
+        {
+          "Generation": 188,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5964166551273433,
+          "Evaluations": 189
+        },
+        {
+          "Generation": 189,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5962713606093326,
+          "Evaluations": 190
+        },
+        {
+          "Generation": 190,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5963301851092525,
+          "Evaluations": 191
+        },
+        {
+          "Generation": 191,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5962498107034135,
+          "Evaluations": 192
+        },
+        {
+          "Generation": 192,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5961453964501263,
+          "Evaluations": 193
+        },
+        {
+          "Generation": 193,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5962099041215859,
+          "Evaluations": 194
+        },
+        {
+          "Generation": 194,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5963278639450452,
+          "Evaluations": 195
+        },
+        {
+          "Generation": 195,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.596057251120415,
+          "Evaluations": 196
+        },
+        {
+          "Generation": 196,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5960520593735039,
+          "Evaluations": 197
+        },
+        {
+          "Generation": 197,
+          "BestFitness": 0.625066376808294,
+          "MeanFitness": 0.5961564697665652,
+          "Evaluations": 198
+        },
+        {
+          "Generation": 198,
+          "BestFitness": 0.626224880615861,
+          "MeanFitness": 0.5963075673085214,
+          "Evaluations": 199
+        },
+        {
+          "Generation": 199,
+          "BestFitness": 0.626224880615861,
+          "MeanFitness": 0.5963874190266657,
+          "Evaluations": 200
+        }
+      ]
+    },
+    {
+      "Optimizer": "ga",
+      "Best": {
+        "WindowFrames": 40,
+        "CompressionThreshold": 0.3,
+        "CriticalWeight": 2.2440392706049788
+      },
+      "BestFitness": 0.6253621480665954,
+      "Evaluations": 200,
+      "History": [
+        {
+          "Generation": 0,
+          "BestFitness": 0.6153154683724553,
+          "MeanFitness": 0.596396463332407,
+          "Evaluations": 12
+        },
+        {
+          "Generation": 1,
+          "BestFitness": 0.6238420223650419,
+          "MeanFitness": 0.6084951119631473,
+          "Evaluations": 23
+        },
+        {
+          "Generation": 2,
+          "BestFitness": 0.6238992061839698,
+          "MeanFitness": 0.6193914338056967,
+          "Evaluations": 34
+        },
+        {
+          "Generation": 3,
+          "BestFitness": 0.6250790548012031,
+          "MeanFitness": 0.6184229600050061,
+          "Evaluations": 45
+        },
+        {
+          "Generation": 4,
+          "BestFitness": 0.6250790548012031,
+          "MeanFitness": 0.623930422932932,
+          "Evaluations": 56
+        },
+        {
+          "Generation": 5,
+          "BestFitness": 0.6251122474955398,
+          "MeanFitness": 0.6249013153751221,
+          "Evaluations": 67
+        },
+        {
+          "Generation": 6,
+          "BestFitness": 0.6252159082906914,
+          "MeanFitness": 0.6241271927172648,
+          "Evaluations": 78
+        },
+        {
+          "Generation": 7,
+          "BestFitness": 0.6253621480665954,
+          "MeanFitness": 0.6247045830720158,
+          "Evaluations": 89
+        },
+        {
+          "Generation": 8,
+          "BestFitness": 0.6253621480665954,
+          "MeanFitness": 0.6228828109512371,
+          "Evaluations": 100
+        },
+        {
+          "Generation": 9,
+          "BestFitness": 0.6253621480665954,
+          "MeanFitness": 0.6231098810293602,
+          "Evaluations": 111
+        },
+        {
+          "Generation": 10,
+          "BestFitness": 0.6253621480665954,
+          "MeanFitness": 0.6188289637645855,
+          "Evaluations": 122
+        },
+        {
+          "Generation": 11,
+          "BestFitness": 0.6253621480665954,
+          "MeanFitness": 0.6243914720927541,
+          "Evaluations": 133
+        },
+        {
+          "Generation": 12,
+          "BestFitness": 0.6253621480665954,
+          "MeanFitness": 0.6211168046781755,
+          "Evaluations": 144
+        },
+        {
+          "Generation": 13,
+          "BestFitness": 0.6253621480665954,
+          "MeanFitness": 0.6215213980108305,
+          "Evaluations": 155
+        },
+        {
+          "Generation": 14,
+          "BestFitness": 0.6253621480665954,
+          "MeanFitness": 0.6236741356142886,
+          "Evaluations": 166
+        },
+        {
+          "Generation": 15,
+          "BestFitness": 0.6253621480665954,
+          "MeanFitness": 0.6240693738687777,
+          "Evaluations": 177
+        },
+        {
+          "Generation": 16,
+          "BestFitness": 0.6253621480665954,
+          "MeanFitness": 0.6228624084325168,
+          "Evaluations": 188
+        },
+        {
+          "Generation": 17,
+          "BestFitness": 0.6253621480665954,
+          "MeanFitness": 0.6206119756998589,
+          "Evaluations": 199
+        },
+        {
+          "Generation": 18,
+          "BestFitness": 0.6253621480665954,
+          "MeanFitness": 0.6251583097603789,
+          "Evaluations": 200
+        }
+      ]
+    }
+  ]
+}

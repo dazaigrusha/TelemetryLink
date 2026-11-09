@@ -63,10 +63,23 @@ public sealed class CommandContext
             Tuning = tuning ?? CurrentTuning
         };
 
-    public Tuning CurrentTuning => new(
-        _options.Value("window", Config.CandidateWindowFrames),
-        _options.Value("threshold", Tuning.Default.CompressionThreshold),
-        _options.Value("critical-weight", Tuning.Default.CriticalWeight));
+    public Tuning CurrentTuning
+    {
+        get
+        {
+            Tuning baseline = Tuning.Default with { WindowFrames = Config.CandidateWindowFrames };
+            if (_options.Has("tuning"))
+            {
+                baseline = System.Text.Json.JsonSerializer.Deserialize<Tuning>(File.ReadAllText(_options.Require("tuning")))
+                    ?? throw new InvalidDataException("Порожній файл параметрів.");
+                if (baseline.ToGenes().Any(x => !double.IsFinite(x)) || baseline != Tuning.FromGenes(baseline.ToGenes()))
+                    throw new InvalidDataException("Параметри поза дозволеними межами.");
+            }
+            return new(_options.Value("window", baseline.WindowFrames),
+                _options.Value("threshold", baseline.CompressionThreshold),
+                _options.Value("critical-weight", baseline.CriticalWeight));
+        }
+    }
 
     public int ChannelSeed => _options.Value("channel-seed", Config.ChannelSeed);
 

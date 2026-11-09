@@ -8,7 +8,23 @@
 
 ---
 
-## Поточний стан — частина 9: MLP та macro-F1
+## Поточний стан — частина 10: випадковий пошук та генетичний алгоритм
+
+Реалізовано S8: обидва оптимізатори підбирають вікно 8–64, поріг стиснення 0.3–1.6 та вагу critical 0–3. Fitness — Q повного прогону. На кожен алгоритм витрачається рівно заданий бюджет, включно з бюджетом меншим за популяцію. GA має турнір, рівномірний кросовер, обмежену мутацію й елітизм без переоцінки.
+
+```bash
+dotnet run --project src/TelemetryLink.Cli -- optimize --optimizer random,ga --budget 200 --scenario emergency --classifier mlp --model EXPERIMENTS-S7/mlp.json --out results/optimization.csv
+dotnet run --project src/TelemetryLink.Cli -- run --scenario emergency --classifier mlp --model EXPERIMENTS-S7/mlp.json --tuning EXPERIMENTS-S8/optimization.ga.best.json
+dotnet test tests/TelemetryLink.Tests -m:1
+```
+
+Зберігаються CSV історії, `.summary.json` та по одному `.ga.best.json` / `.random.best.json`. Файли best можна підключити через `--tuning` у run/compare. Явні `--window`, `--threshold`, `--critical-weight` перевизначають відповідні завантажені значення.
+
+У прикладі `EXPERIMENTS-S8`: по 200 оцінок; random Q=0.626225, GA Q=0.625362. У цьому запуску random кращий. Q містить час виконання, тому однаковий seed не робить реальний fitness детермінованим; це один експеримент, а не доказ загальної переваги. Оцінки еліт зберігаються з моменту першого вимірювання. Для чистої детермінованої fitness послідовності кандидатів відтворюються тестами.
+
+Перевірено 336 тестів, без пропусків; verify 11/11; збірка без помилок і попереджень. Повний перелік змін — `STEP-10.md`. Наступний S9: фінальні експерименти й захист; зокрема шаблон експерименту порядку операцій ще потребує реалізації.
+
+## Частина 9: MLP та macro-F1
 
 Рішення `TelemetryLink.slnx`, .NET 10 SDK. Реалізовано власну нейромережу без ML-бібліотек: приховані ReLU, softmax, cross-entropy, backpropagation та SGD. Класи: 0 — норма, 1 — аномалія, 2 — перехідний стан.
 
@@ -22,14 +38,14 @@ dotnet run --project src/TelemetryLink.Cli -- train --out results/mlp.json
 dotnet run --project src/TelemetryLink.Cli -- run --classifier mlp --model EXPERIMENTS-S7/mlp.json
 dotnet run --project src/TelemetryLink.Cli -- compare --vary classifier=majority,mlp --model EXPERIMENTS-S7/mlp.json --out results/classifiers.csv
 dotnet run --project src/TelemetryLink.Cli -- verify
-dotnet test tests/TelemetryLink.Tests -m:1 --filter "FullyQualifiedName!~OptimizerTests"
+dotnet test tests/TelemetryLink.Tests -m:1
 ```
 
 `train` зберігає модель `.json`, звіт `.training.json` і журнал `.history.csv`. `--no-test` дозволяє навчання тільки з внутрішньою валідацією. Типово: `--window 8 --hidden 32,16 --epochs 12 --learning-rate 0.02 --inits 3 --seed 1`. Для `train` window — історія ознак; для `run` — вікно пакування. Історію моделі при запуску беруть із збереженої моделі.
 
 За замовчуванням запуск лишається з `majority`; MLP вмикається через `--classifier mlp --model ...`. Macro-F1 оцінює класифікацію, Q — передачу телеметрії. Вища F1 не гарантує вищого Q: у збереженому порівнянні MLP не покращив Q. Час виконання та Q залежать від середовища.
 
-Приклади цієї частини лежать у `EXPERIMENTS-S7`, точний перелік файлів і комміт — у `STEP-09.md`. Compare з попередньої частини підтримує прогрів, повтори, seed та три файли звітів. Залишився етап S8: оптимізатори параметрів; його 8 тестів ще позначені Skip. Нижче — довідка початкового шаблону.
+Приклади цієї частини лежать у `EXPERIMENTS-S7`, точний перелік файлів і комміт — у `STEP-09.md`. Compare з попередньої частини підтримує прогрів, повтори, seed та три файли звітів. Оптимізатори S8 додані в частині 10. Нижче — довідка початкового шаблону.
 
 ## Перший запуск
 

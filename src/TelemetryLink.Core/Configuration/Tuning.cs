@@ -36,10 +36,13 @@ public sealed record Tuning(int WindowFrames, double CompressionThreshold, doubl
 
     public double[] ToGenes() => [WindowFrames, CompressionThreshold, CriticalWeight];
 
-    public static Tuning FromGenes(IReadOnlyList<double> genes) => new(
-        (int)Math.Round(Clamp(genes[0], 0)),
-        Clamp(genes[1], 1),
-        Clamp(genes[2], 2));
+    public static Tuning FromGenes(IReadOnlyList<double> genes)
+    {
+        ArgumentNullException.ThrowIfNull(genes);
+        if (genes.Count != 3 || genes.Any(x => !double.IsFinite(x)))
+            throw new ArgumentException("Хромосома має містити три скінченні гени.");
+        return new((int)Math.Round(Clamp(genes[0], 0)), Clamp(genes[1], 1), Clamp(genes[2], 2));
+    }
 
     /// <summary>Значення гена завжди лишається в межах — інакше прогін просто впаде.</summary>
     public static double Clamp(double value, int geneIndex)

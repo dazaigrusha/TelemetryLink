@@ -86,6 +86,17 @@ static int Help()
           --classifier  {CLASSIFIERS}
           --optimizer   {OPTIMIZERS}
 
+        Оптимізація
+          --budget <n>         рівно n викликів fitness на кожен алгоритм
+          --seed <n>           seed оптимізатора, типово 1
+          --population <n>     розмір популяції GA, типово 12
+          --tournament <n>     турнір з поверненням, типово 3
+          --mutation <p>       імовірність мутації гена, типово 0.2
+          --mutation-scale <x> частка діапазону гена, типово 0.15
+          --elite <n>          еліт без переоцінки, типово 1
+          --out <file.csv>     історія + .summary.json + .ga/.random.best.json
+          --tuning <file.json> збережені параметри для run/compare
+
         Параметри тракту
           --window <n>              розмір вікна кандидатів
           --threshold <біт/байт>    поріг відмови від стиснення
