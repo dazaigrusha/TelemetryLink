@@ -1,89 +1,63 @@
+using System.Globalization;
 using TelemetryLink.Core.InputOutput;
 using TelemetryLink.Core.Metrics;
 using TelemetryLink.Core.Prediction;
 
 namespace TelemetryLink.Cli.Commands;
 
-/// <summary>
-/// Навчання класифікатора за протоколом: 80/20, три ініціалізації, вибір
-/// моделі за macro-F1 на валідації.
-/// </summary>
 public static class TrainCommand
 {
     public static int Execute(CommandLineOptions options)
     {
         var context = new CommandContext(options);
-
-        string trainPath = options.Value("train", Path.Combine(CommandContext.DataDirectory, "train.csv"));
-        string validPath = options.Value("valid", Path.Combine(CommandContext.DataDirectory, "valid.csv"));
-        string outputPath = options.Value("out", "model.json");
-
+        bool noTest = options.Has("no-test");
+        if (noTest && options.Has("valid")) throw new ArgumentException("Оберіть --no-test або --valid.");
+        string trainPath = options.Has("train") ? options.Require("train") : Path.Combine(CommandContext.DataDirectory, "train.csv");
+        string validPath = options.Has("valid") ? options.Require("valid") : Path.Combine(CommandContext.DataDirectory, "valid.csv");
+        string configPath = options.Value("config", Path.Combine(CommandContext.DataDirectory, "team_config.json"));
+        string output = options.Has("out") ? options.Require("out") : "model.json";
+        TrainingArtifacts.ValidateDestinations(output, trainPath, validPath, configPath);
+        if (!noTest && !File.Exists(validPath)) throw new FileNotFoundException("Не знайдено відкритий TEST; для навчання без його оцінки задайте --no-test.", validPath);
+        int[]? hidden = null;
+        if (options.Has("hidden"))
+        {
+            string text = options.Require("hidden");
+            hidden = text.Equals("none", StringComparison.OrdinalIgnoreCase) ? [] : text.Split(',').Select(value =>
+                int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int count) && count > 0
+                    ? count : throw new ArgumentException("--hidden: додатні розміри через кому або none.")).ToArray();
+        }
+        var trainingOptions = new TrainingOptions(WindowSize: options.Value("window", 8), HiddenLayers: hidden,
+            Epochs: options.Value("epochs", 12), LearningRate: options.Value("learning-rate", 0.02),
+            Initializations: options.Value("inits", 3), Seed: options.Value("seed", 1));
         var train = TelemetryCsvReader.Read(trainPath);
-        if (train.Labels is null)
-        {
-            Console.Error.WriteLine($"У файлі {trainPath} немає колонки label.");
-            return 2;
-        }
-
-        var trainingOptions = new TrainingOptions(
-            WindowSize: options.Value("window", 8),
-            Epochs: options.Value("epochs", 12),
-            LearningRate: options.Value("learning-rate", 0.02),
-            Initializations: options.Value("inits", 3),
-            Seed: options.Value("seed", 1));
-
-        Console.WriteLine();
-        Console.WriteLine($"навчання: {train.Frames.Count} кадрів, вікно {trainingOptions.WindowSize}, " +
-                          $"{trainingOptions.Initializations} ініціалізацій, {trainingOptions.Epochs} епох");
-        Console.WriteLine($"ознаки: {string.Join(", ", FeatureExtractor.FeatureNames)}");
-        Console.WriteLine();
-
+        if (train.Labels is null) throw new InvalidDataException("TRAIN має містити колонку label.");
+        Console.WriteLine($"TRAIN: {train.Frames.Count} кадрів, часовий поділ 80/20, {trainingOptions.Initializations} ініціалізації.");
+        Console.WriteLine($"Вікно історії {trainingOptions.WindowSize}; ознаки: {string.Join(", ", FeatureExtractor.FeatureNames)}");
         var trainer = new PerceptronTrainer();
-        var model = trainer.Train(train.Frames, train.Labels, trainingOptions);
-
+        var model = trainer.Train(train.Frames, train.Labels, trainingOptions, epoch => Console.WriteLine(
+            FormattableString.Invariant($"seed={epoch.Seed}, epoch={epoch.Epoch}: loss={epoch.MeanBalancedTrainingLoss:F5}, internal macro-F1={epoch.ValidationMacroF1:F4}")));
         foreach (var attempt in trainer.Attempts)
-            Console.WriteLine($"  ініціалізація seed={attempt.Seed}   macro-F1 на валідації = {attempt.ValidationMacroF1:F4}");
-
-        Console.WriteLine();
-        Console.WriteLine($"обрано модель seed={model.Seed}, macro-F1 = {model.ValidationMacroF1:F4}");
-
-        model.Save(outputPath);
-        Console.WriteLine($"записано: {outputPath}");
-
-        // Перевірка на відкритому наборі valid.csv. Прихованого holdout.csv
-        // у команди немає і не буде — підсумковий macro-F1 рахує викладач.
-        if (File.Exists(validPath)) EvaluateOn(validPath, model, context.Config.MinimumMacroF1);
-
-        Console.WriteLine();
-        return 0;
-    }
-
-    private static void EvaluateOn(string path, ClassifierModel model, double minimumMacroF1)
-    {
-        var validation = TelemetryCsvReader.Read(path);
-        if (validation.Labels is null) return;
-
-        var predicted = new PerceptronClassifier(model).Classify(validation.Frames)
-            .Select(c => (int)c).ToArray();
-        var report = new ClassificationReport(validation.Labels, predicted);
-
-        Console.WriteLine();
-        Console.WriteLine($"{Path.GetFileName(path)}: macro-F1 = {report.MacroF1:F4}, точність = {report.Accuracy:P1}");
-        Console.WriteLine();
-        Console.WriteLine("матриця помилок (рядок — істина, стовпець — прогноз)");
-        Console.WriteLine($"{"",14}{"норма",10}{"аномалія",12}{"перехідний",12}{"F1",10}");
-
-        string[] names = ["норма", "аномалія", "перехідний"];
-        for (int actual = 0; actual < report.ClassCount; actual++)
+            Console.WriteLine($"seed={attempt.Seed}: найкраща епоха {attempt.BestEpoch}, internal macro-F1={attempt.ValidationMacroF1:F4}");
+        Console.WriteLine($"Обрано seed={model.Seed}, epoch={model.SelectedEpoch}; internal macro-F1={model.ValidationMacroF1:F4}.");
+        ClassifierEvaluation? evaluation = null;
+        if (!noTest)
         {
-            Console.Write($"  {names[actual],-12}");
-            for (int predictedClass = 0; predictedClass < report.ClassCount; predictedClass++)
-                Console.Write($"{report.Confusion(actual, predictedClass),10}  ");
-            Console.WriteLine($"{report.F1(actual),8:F4}");
+            // Відкритий TEST читається та оцінюється ЛИШЕ після остаточного вибору моделі.
+            var test = TelemetryCsvReader.Read(validPath);
+            if (test.Labels is null || test.Frames.Count == 0) throw new InvalidDataException("Відкритий TEST має містити кадри та label.");
+            var predicted = new PerceptronClassifier(model).Classify(test.Frames).Select(c => (int)c).ToArray();
+            var report = new ClassificationReport(test.Labels, predicted);
+            var majority = new ClassificationReport(test.Labels, new int[test.Labels.Count]);
+            evaluation = ClassifierEvaluation.From(report, majority);
+            Console.WriteLine($"{Path.GetFileName(validPath)}: macro-F1={report.MacroF1:F4}; accuracy={report.Accuracy:P2}; majority macro-F1={majority.MacroF1:F4}");
+            Console.WriteLine("Матриця: рядок — істина, стовпець — прогноз [норма, аномалія, перехідний].");
+            for (int actual = 0; actual < 3; actual++)
+                Console.WriteLine($"{actual}: {report.Confusion(actual, 0),6} {report.Confusion(actual, 1),6} {report.Confusion(actual, 2),6}; F1={report.F1(actual):F4}");
+            Console.WriteLine($"{(report.MacroF1 >= context.Config.MinimumMacroF1 ? "OK" : "НЕ ДОСЯГНУТО")}: F1_min={context.Config.MinimumMacroF1:F2}");
         }
-
-        Console.WriteLine();
-        Console.WriteLine($"  {(report.MacroF1 >= minimumMacroF1 ? "OK  " : "УВАГА")} " +
-                          $"поріг F1_min = {minimumMacroF1:F2}, отримано {report.MacroF1:F4}");
+        else Console.WriteLine("Відкритий TEST не оцінювався (--no-test); це не підсумкова оцінка.");
+        TrainingArtifacts.Write(output, model, trainer, trainingOptions, trainPath, configPath,
+            noTest ? null : validPath, evaluation, context.Config);
+        return evaluation is not null && evaluation.MacroF1 < context.Config.MinimumMacroF1 ? 1 : 0;
     }
 }

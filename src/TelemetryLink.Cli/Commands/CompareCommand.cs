@@ -61,7 +61,7 @@ public static class CompareCommand
                 ? "Без зміни конфігурації: використано базові виміри, ΔQ=0; це не окремий експеримент."
                 : null);
         }
-        return [new("baseline", baseline, Note: "Поточна конфігурація; MLP з'явиться у наступній частині."),
+        return [new("baseline", baseline, Note: $"Поточна конфігурація; classifier={baseline.Classifier.Name}."),
             Variant("no-compression", "codec", "none"), Variant("greedy-packer", "packer", "greedy"),
             Variant("sequential-scheduler", "scheduler", "sequential"), Variant("majority-classifier", "classifier", "majority")];
     }

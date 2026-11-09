@@ -67,6 +67,18 @@ static int Help()
           --out <file.csv>    повні виміри + .summary.csv + .manifest.json
           --strict           ненульовий код при перевищенні порогу втрати critical
 
+        Навчання MLP
+          --train <csv>        TRAIN (типово data/train.csv)
+          --valid <csv>        відкритий TEST, оцінюється після вибору моделі
+          --no-test            навчати без читання відкритого TEST
+          --window <n>         для train: історія ознак; для run: вікно пакування
+          --hidden <32,16>     приховані шари; none — лінійний softmax
+          --epochs <n>         епох, типово 12
+          --learning-rate <x>  початковий крок SGD, типово 0.02
+          --inits <n>          щонайменше 3 різні ініціалізації
+          --seed <n>           перший seed навчання, типово 1
+          --out <model.json>   модель + .training.json + .history.csv
+
         Вибір алгоритмів
           --codec       {CODECS}
           --packer      {PACKERS}

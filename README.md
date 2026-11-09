@@ -8,21 +8,28 @@
 
 ---
 
-## Поточний стан — частина 8: порівняння та звітність
+## Поточний стан — частина 9: MLP та macro-F1
 
-.NET 10, рішення TelemetryLink.slnx. Compare тепер виконує прогрів (типово 1) та повтори (типово 3), підтримує список seed, ротацію порядку варіантів, середні значення, описовий SD і парні ΔQ. Один експеримент змінює один компонент.
+Рішення `TelemetryLink.slnx`, .NET 10 SDK. Реалізовано власну нейромережу без ML-бібліотек: приховані ReLU, softmax, cross-entropy, backpropagation та SGD. Класи: 0 — норма, 1 — аномалія, 2 — перехідний стан.
+
+Навчання використовує часовий поділ TRAIN 80/20 (6400/1600 кадрів). Нормалізація та балансування класів обчислюються лише за навчальними 80%. Десять ознак використовують поточний кадр та минулу історію. Серед трьох ініціалізацій і їхніх епох обирається найкращий internal macro-F1. `valid.csv` оцінюється після вибору; він не використовується для налаштування ваг, scaler або вибору моделі.
+
+У збереженому прикладі: seed=2, epoch=3, internal macro-F1=0.8989; відкритий TEST macro-F1=0.8778 при мінімумі 0.58, accuracy=93.40%. Majority macro-F1=0.2922. Прихований набір викладача не перевірявся.
 
 ```bash
 dotnet build TelemetryLink.slnx -m:1
-dotnet run --project src/TelemetryLink.Cli -- compare --vary packer=sequential,greedy,dp --scenario calm,working,emergency --out results/packers.csv
-dotnet run --project src/TelemetryLink.Cli -- compare --vary scheduler=sequential,greedy --seeds 425243,425244 --repeats 3 --warmup 1 --out results/schedulers.csv
-dotnet run --project src/TelemetryLink.Cli -- compare --ablation --out results/ablation.csv
+dotnet run --project src/TelemetryLink.Cli -- train --out results/mlp.json
+dotnet run --project src/TelemetryLink.Cli -- run --classifier mlp --model EXPERIMENTS-S7/mlp.json
+dotnet run --project src/TelemetryLink.Cli -- compare --vary classifier=majority,mlp --model EXPERIMENTS-S7/mlp.json --out results/classifiers.csv
 dotnet run --project src/TelemetryLink.Cli -- verify
+dotnet test tests/TelemetryLink.Tests -m:1 --filter "FullyQualifiedName!~OptimizerTests"
 ```
 
-Для кожного compare зберігаються файл вимірів .csv, підсумок .summary.csv та параметри/хеші даних .manifest.json. Прогрів до вимірів не входить. Повтори того самого seed не є незалежними вибірками каналу. У ablation незмінена конфігурація явно позначається як reused_baseline, а не вимірюється наново.
+`train` зберігає модель `.json`, звіт `.training.json` і журнал `.history.csv`. `--no-test` дозволяє навчання тільки з внутрішньою валідацією. Типово: `--window 8 --hidden 32,16 --epochs 12 --learning-rate 0.02 --inits 3 --seed 1`. Для `train` window — історія ознак; для `run` — вікно пакування. Історію моделі при запуску беруть із збереженої моделі.
 
-Приклади є у EXPERIMENTS-S6; повна інструкція й комміт — у STEP-08.md. Час, T та Q залежать від середовища. Навчання MLP, macro-F1 та оптимізатори ще не реалізовані. Старі CSV лишилися історичними прикладами. Нижче — довідка початкового шаблону.
+За замовчуванням запуск лишається з `majority`; MLP вмикається через `--classifier mlp --model ...`. Macro-F1 оцінює класифікацію, Q — передачу телеметрії. Вища F1 не гарантує вищого Q: у збереженому порівнянні MLP не покращив Q. Час виконання та Q залежать від середовища.
+
+Приклади цієї частини лежать у `EXPERIMENTS-S7`, точний перелік файлів і комміт — у `STEP-09.md`. Compare з попередньої частини підтримує прогрів, повтори, seed та три файли звітів. Залишився етап S8: оптимізатори параметрів; його 8 тестів ще позначені Skip. Нижче — довідка початкового шаблону.
 
 ## Перший запуск
 

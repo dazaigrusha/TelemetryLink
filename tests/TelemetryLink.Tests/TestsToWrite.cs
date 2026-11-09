@@ -15,26 +15,6 @@ namespace TelemetryLink.Tests;
 /// Категорії позначені в назві файла-групи:
 ///   [С] стандартний   [К] крайній   [Х] хибний   [І] інваріант
 /// </summary>
-public class MetricsTests
-{
-    [Fact(Skip = "TODO(S7) [К]: ідеальний прогноз → macro-F1 = 1")] public void MacroF1_OfPerfectPrediction_IsOne() { }
-    [Fact(Skip = "TODO(S7) [С]: ігнорування найменшого класу карається")] public void MacroF1_PunishesIgnoringSmallestClass() { }
-    [Fact(Skip = "TODO(S7) [К]: клас відсутній у прогнозі → 0, а не NaN")] public void MacroF1_ClassAbsentFromPrediction_IsZero_NotNaN() { }
-}
-
-public class PerceptronTests
-{
-    [Fact(Skip = "TODO(S7) [С] НАЙВАЖЛИВІШИЙ: градієнт backprop проти числового")] public void Backpropagation_MatchesNumericalGradient() { }
-    [Fact(Skip = "TODO(S7) [І]: softmax дає суму 1")] public void Forward_ReturnsProbabilitiesThatSumToOne() { }
-    [Fact(Skip = "TODO(S7) [С]: лінійно роздільні дані вчаться до 100 %")] public void Train_OnLinearlySeparableData_ReachesFullAccuracy() { }
-    [Fact(Skip = "TODO(S7) [С]: XOR потребує прихованого шару")] public void Train_OnXor_RequiresHiddenLayer() { }
-    [Fact(Skip = "TODO(S7) [І]: той самий seed → ті самі ваги")] public void SameSeed_ProducesSameInitialWeights() { }
-    [Fact(Skip = "TODO(S7) [С]: збереження і завантаження не змінюють прогноз")] public void ToJson_ThenFromJson_PreservesPredictions() { }
-    [Fact(Skip = "TODO(S7) [К]: перший кадр — нульові різниці, не NaN")] public void FeatureExtractor_FirstFrame_HasZeroDeltas() { }
-    [Fact(Skip = "TODO(S7) [К]: вікно довше за сеанс")] public void FeatureExtractor_WindowLongerThanSession_UsesAvailableFrames() { }
-    [Fact(Skip = "TODO(S7) [К]: стала ознака не дає ділення на нуль")] public void Scaler_ConstantFeature_DoesNotDivideByZero() { }
-}
-
 public class OptimizerTests
 {
     [Fact(Skip = "TODO(S8) [І] кейс D1 №16: елітизм не дає погіршення")] public void Genetic_BestOfLastGeneration_NeverWorseThanGenerationZero() { }

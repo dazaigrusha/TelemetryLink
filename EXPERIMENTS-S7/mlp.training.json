@@ -1,0 +1,336 @@
+{
+  "schemaVersion": 1,
+  "createdUtc": "2026-11-09T00:35:56.0623536+00:00",
+  "runtime": ".NET 10.0.0",
+  "os": "Ubuntu 24.04.3 LTS",
+  "training": {
+    "windowSize": 8,
+    "hiddenLayers": null,
+    "epochs": 12,
+    "learningRate": 0.02,
+    "initializations": 3,
+    "validationShare": 0.2,
+    "seed": 1,
+    "hidden": [
+      32,
+      16
+    ]
+  },
+  "protocol": {
+    "split": "chronological 80/20",
+    "trainingCount": 6400,
+    "validationCount": 1600,
+    "scalerFit": "training prefix only",
+    "features": "causal: current and previous frames only",
+    "balancing": "equal samples per present class with replacement; training prefix only",
+    "learningRate": "initial / (1 \u002B 0.15 * (epoch - 1))",
+    "selection": "best internal-validation macro-F1 checkpoint per seed, then best seed; ties keep earlier",
+    "testEvaluatedAfterSelection": true,
+    "testUsedForSelection": false
+  },
+  "featureSchema": "telemetry-history-v1",
+  "featureNames": [
+    "\u0394altitude",
+    "\u0394temp",
+    "|vibration|",
+    "vibration",
+    "\u03C3(vibration) \u043F\u043E \u0432\u0456\u043A\u043D\u0443",
+    "\u03C3(altitude) \u043F\u043E \u0432\u0456\u043A\u043D\u0443",
+    "\u0441\u0435\u0440\u0435\u0434\u043D\u0454 |vibration| \u043F\u043E \u0432\u0456\u043A\u043D\u0443",
+    "\u0447\u0430\u0441\u0442\u043E\u0442\u0430 \u0437\u043C\u0456\u043D\u0438 mode",
+    "\u0434\u0440\u0435\u0439\u0444 altitude \u043F\u043E \u0432\u0456\u043A\u043D\u0443",
+    "critical"
+  ],
+  "inputs": {
+    "train": {
+      "fileName": "train.csv",
+      "sha256": "5c942b1d9c1c0342fb3a17c92a655dbef031c15cccc057e179e7eb5be1fe7e0d"
+    },
+    "config": {
+      "fileName": "team_config.json",
+      "sha256": "49ca1de019c0e3f2c6e644372b491efab21ba51dbe731ed3a88873f740019690"
+    },
+    "openTest": {
+      "fileName": "valid.csv",
+      "sha256": "24981f64ee2e6cbb46a8b6c20d8352da2a89d55598d4d25c5fb40f6b12325860"
+    }
+  },
+  "model": {
+    "fileName": "mlp.json",
+    "sha256": "c77a300dc4649d93e58d7587d1f7ecac86d7849ab1881c6edf85b691d532f186",
+    "seed": 2,
+    "validationMacroF1": 0.8988667580311951,
+    "selectedEpoch": 3,
+    "layers": [
+      10,
+      32,
+      16,
+      3
+    ]
+  },
+  "attempts": [
+    {
+      "seed": 1,
+      "validationMacroF1": 0.8868516188087572,
+      "bestEpoch": 5
+    },
+    {
+      "seed": 2,
+      "validationMacroF1": 0.8988667580311951,
+      "bestEpoch": 3
+    },
+    {
+      "seed": 3,
+      "validationMacroF1": 0.8859835457336039,
+      "bestEpoch": 9
+    }
+  ],
+  "history": [
+    {
+      "seed": 1,
+      "epoch": 1,
+      "meanBalancedTrainingLoss": 0.2815672198291967,
+      "validationMacroF1": 0.8648270479329906
+    },
+    {
+      "seed": 1,
+      "epoch": 2,
+      "meanBalancedTrainingLoss": 0.20655860476928706,
+      "validationMacroF1": 0.8492517599690269
+    },
+    {
+      "seed": 1,
+      "epoch": 3,
+      "meanBalancedTrainingLoss": 0.17664900627290955,
+      "validationMacroF1": 0.8425394065391245
+    },
+    {
+      "seed": 1,
+      "epoch": 4,
+      "meanBalancedTrainingLoss": 0.16959614639720644,
+      "validationMacroF1": 0.8796047277855671
+    },
+    {
+      "seed": 1,
+      "epoch": 5,
+      "meanBalancedTrainingLoss": 0.16778684908219116,
+      "validationMacroF1": 0.8868516188087572
+    },
+    {
+      "seed": 1,
+      "epoch": 6,
+      "meanBalancedTrainingLoss": 0.14878074627846033,
+      "validationMacroF1": 0.8818990025002877
+    },
+    {
+      "seed": 1,
+      "epoch": 7,
+      "meanBalancedTrainingLoss": 0.13362446137289966,
+      "validationMacroF1": 0.8658399339629638
+    },
+    {
+      "seed": 1,
+      "epoch": 8,
+      "meanBalancedTrainingLoss": 0.1340061396480805,
+      "validationMacroF1": 0.8647670136554361
+    },
+    {
+      "seed": 1,
+      "epoch": 9,
+      "meanBalancedTrainingLoss": 0.12886115537394963,
+      "validationMacroF1": 0.8776625512321231
+    },
+    {
+      "seed": 1,
+      "epoch": 10,
+      "meanBalancedTrainingLoss": 0.12072653961926283,
+      "validationMacroF1": 0.8854639578488485
+    },
+    {
+      "seed": 1,
+      "epoch": 11,
+      "meanBalancedTrainingLoss": 0.10924721016960655,
+      "validationMacroF1": 0.875671256706349
+    },
+    {
+      "seed": 1,
+      "epoch": 12,
+      "meanBalancedTrainingLoss": 0.10667599144405955,
+      "validationMacroF1": 0.8848501996841817
+    },
+    {
+      "seed": 2,
+      "epoch": 1,
+      "meanBalancedTrainingLoss": 0.2682048844578196,
+      "validationMacroF1": 0.8655429031060887
+    },
+    {
+      "seed": 2,
+      "epoch": 2,
+      "meanBalancedTrainingLoss": 0.2049726474983948,
+      "validationMacroF1": 0.8625914207071097
+    },
+    {
+      "seed": 2,
+      "epoch": 3,
+      "meanBalancedTrainingLoss": 0.17916290879917637,
+      "validationMacroF1": 0.8988667580311951
+    },
+    {
+      "seed": 2,
+      "epoch": 4,
+      "meanBalancedTrainingLoss": 0.157554164851271,
+      "validationMacroF1": 0.8677798620592511
+    },
+    {
+      "seed": 2,
+      "epoch": 5,
+      "meanBalancedTrainingLoss": 0.14510464235553117,
+      "validationMacroF1": 0.8817426305745387
+    },
+    {
+      "seed": 2,
+      "epoch": 6,
+      "meanBalancedTrainingLoss": 0.13240314834012581,
+      "validationMacroF1": 0.8870423059926522
+    },
+    {
+      "seed": 2,
+      "epoch": 7,
+      "meanBalancedTrainingLoss": 0.13094196525441767,
+      "validationMacroF1": 0.8685427531841506
+    },
+    {
+      "seed": 2,
+      "epoch": 8,
+      "meanBalancedTrainingLoss": 0.11545374791547543,
+      "validationMacroF1": 0.8549821579927767
+    },
+    {
+      "seed": 2,
+      "epoch": 9,
+      "meanBalancedTrainingLoss": 0.11661097117548888,
+      "validationMacroF1": 0.8830179803079276
+    },
+    {
+      "seed": 2,
+      "epoch": 10,
+      "meanBalancedTrainingLoss": 0.1040637566941723,
+      "validationMacroF1": 0.8801253231426323
+    },
+    {
+      "seed": 2,
+      "epoch": 11,
+      "meanBalancedTrainingLoss": 0.0945042877625794,
+      "validationMacroF1": 0.8699098068840337
+    },
+    {
+      "seed": 2,
+      "epoch": 12,
+      "meanBalancedTrainingLoss": 0.09398815212125772,
+      "validationMacroF1": 0.8586689759899921
+    },
+    {
+      "seed": 3,
+      "epoch": 1,
+      "meanBalancedTrainingLoss": 0.27403205115969786,
+      "validationMacroF1": 0.8388301815837801
+    },
+    {
+      "seed": 3,
+      "epoch": 2,
+      "meanBalancedTrainingLoss": 0.1980411809715907,
+      "validationMacroF1": 0.8701531288160528
+    },
+    {
+      "seed": 3,
+      "epoch": 3,
+      "meanBalancedTrainingLoss": 0.17705594472907635,
+      "validationMacroF1": 0.8760022337043406
+    },
+    {
+      "seed": 3,
+      "epoch": 4,
+      "meanBalancedTrainingLoss": 0.15886810073915011,
+      "validationMacroF1": 0.8575987430800432
+    },
+    {
+      "seed": 3,
+      "epoch": 5,
+      "meanBalancedTrainingLoss": 0.15404001627873554,
+      "validationMacroF1": 0.8740116231186951
+    },
+    {
+      "seed": 3,
+      "epoch": 6,
+      "meanBalancedTrainingLoss": 0.12682871560121803,
+      "validationMacroF1": 0.864531469239469
+    },
+    {
+      "seed": 3,
+      "epoch": 7,
+      "meanBalancedTrainingLoss": 0.1301502313578908,
+      "validationMacroF1": 0.8532914561216448
+    },
+    {
+      "seed": 3,
+      "epoch": 8,
+      "meanBalancedTrainingLoss": 0.11731047228508959,
+      "validationMacroF1": 0.8701896876943954
+    },
+    {
+      "seed": 3,
+      "epoch": 9,
+      "meanBalancedTrainingLoss": 0.11296096140291222,
+      "validationMacroF1": 0.8859835457336039
+    },
+    {
+      "seed": 3,
+      "epoch": 10,
+      "meanBalancedTrainingLoss": 0.10796475091646941,
+      "validationMacroF1": 0.8739927834336262
+    },
+    {
+      "seed": 3,
+      "epoch": 11,
+      "meanBalancedTrainingLoss": 0.101157316501106,
+      "validationMacroF1": 0.8636423940220972
+    },
+    {
+      "seed": 3,
+      "epoch": 12,
+      "meanBalancedTrainingLoss": 0.09644743107016569,
+      "validationMacroF1": 0.8619413227138245
+    }
+  ],
+  "openTest": {
+    "samples": 2000,
+    "macroF1": 0.8777865962296936,
+    "accuracy": 0.934,
+    "confusion": [
+      [
+        1491,
+        5,
+        65
+      ],
+      [
+        2,
+        190,
+        10
+      ],
+      [
+        33,
+        17,
+        187
+      ]
+    ],
+    "f1": [
+      0.9659863945578231,
+      0.9178743961352657,
+      0.749498997995992
+    ],
+    "majorityMacroF1": 0.2922400074885332
+  },
+  "minimumMacroF1": 0.58,
+  "meetsOpenTestMinimum": true
+}
