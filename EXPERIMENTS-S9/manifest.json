@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "created_utc": "2026-11-09T14:34:34.610596+00:00",
+  "sdk": "10.0.403",
+  "comparison": {
+    "seeds": [
+      1001,
+      1002,
+      1003
+    ],
+    "repeats": 3,
+    "warmup": 1,
+    "scenarios": [
+      "calm",
+      "working",
+      "emergency"
+    ],
+    "classifier": "mlp",
+    "model": "EXPERIMENTS-S7/mlp.json"
+  },
+  "run_channel_seed": 425243,
+  "optimization": {
+    "seed": 1,
+    "budget_per_optimizer": 200,
+    "scenario": "emergency",
+    "channel_seed": 425243
+  },
+  "inputs": [
+    {
+      "file": "data/team_config.json",
+      "sha256": "49ca1de019c0e3f2c6e644372b491efab21ba51dbe731ed3a88873f740019690"
+    },
+    {
+      "file": "data/session.csv",
+      "sha256": "db5d92746846a9ee14c16eb59b5b97bd816a82bb39efb00e9ccfbd06ff67406f"
+    },
+    {
+      "file": "EXPERIMENTS-S7/mlp.json",
+      "sha256": "c77a300dc4649d93e58d7587d1f7ecac86d7849ab1881c6edf85b691d532f186"
+    }
+  ],
+  "outputs": [
+    {
+      "file": "EXPERIMENTS-S9/ablation.csv",
+      "sha256": "59365ca6572e8ef0adfbbeb3d532e7e90266a45bcdfb915c0d9394d14c19ea64"
+    },
+    {
+      "file": "EXPERIMENTS-S9/ablation.manifest.json",
+      "sha256": "fab2eb0ee7af2593843a5a7590f5544b9387385ad4d96f9e9b5355715c3acd35"
+    },
+    {
+      "file": "EXPERIMENTS-S9/ablation.summary.csv",
+      "sha256": "e2908ac853d66386b37a5add2b3b29a8258213ec3f742c72d5da898a1be8f93d"
+    },
+    {
+      "file": "EXPERIMENTS-S9/convergence.png",
+      "sha256": "1520804c01dc0dde80014caec8d2b198f38aea65b72c87b34752eaf24ebe7deb"
+    },
+    {
+      "file": "EXPERIMENTS-S9/optimization.csv",
+      "sha256": "23b01fe36c077d28b6318eee480fdfc387dda57b77fb6ad426774e1992c2ecd8"
+    },
+    {
+      "file": "EXPERIMENTS-S9/optimization.ga.best.json",
+      "sha256": "6c8e81e6d9df4e3544e510111cde9423bac18dfcd199706c387a863c378802a5"
+    },
+    {
+      "file": "EXPERIMENTS-S9/optimization.random.best.json",
+      "sha256": "af1bc2cd640627f7e106d8fda2768c21bff2d3d83cb0deb5ef789ab97b3c7dd3"
+    },
+    {
+      "file": "EXPERIMENTS-S9/optimization.summary.json",
+      "sha256": "8dd36442536cbdfb2b9041762a063f6a2695258f48385944fadc6cc9048eba79"
+    },
+    {
+      "file": "EXPERIMENTS-S9/order.csv",
+      "sha256": "d1f82c96fa95f339689d4aaee1699be601779f59413389d58db4f4c20b944533"
+    },
+    {
+      "file": "EXPERIMENTS-S9/packers.csv",
+      "sha256": "8812189552929800d19afe67b4c63237e51ee8193b38b665e449db6184e01b4a"
+    },
+    {
+      "file": "EXPERIMENTS-S9/packers.manifest.json",
+      "sha256": "7824610692549c742fe330f3d67dd2bb9427e4114973cb7afc15cba1bb324fb6"
+    },
+    {
+      "file": "EXPERIMENTS-S9/packers.summary.csv",
+      "sha256": "5c72f404dc27d83f8ecc7dc588fb235c6837466564dd1c27940e6430847f5081"
+    },
+    {
+      "file": "EXPERIMENTS-S9/run-calm.csv",
+      "sha256": "8e044be1be2e0acb2eb92945089a21f5ca1d745519b69072c559ca23d626234a"
+    },
+    {
+      "file": "EXPERIMENTS-S9/run-emergency.csv",
+      "sha256": "a37c76a1b60cd401906cb00d2deaaa7484ddebecd8abcd00d9df7e7d7ddf12e5"
+    },
+    {
+      "file": "EXPERIMENTS-S9/run-working.csv",
+      "sha256": "433c25f7be1636feaa3a5f76a4d009eada4706b2cf0d5e34554c163fca3ce692"
+    }
+  ],
+  "notes": [
+    "Time and Q depend on environment",
+    "TEST not used to select pipeline parameters",
+    "Order experiment excludes shared envelope overhead",
+    "Critical-loss threshold in emergency is not met"
+  ]
+}

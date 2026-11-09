@@ -31,7 +31,7 @@ public sealed class CodeTable
                 entries.Add(new CodeTableEntry((byte)symbol, lengths[symbol]));
         Entries = entries.AsReadOnly();
 
-        // TODO(S3): підготувати допоміжні структури для TryDecodeNext.
+        // Декодування канонічних кодів виконує CanonicalDecoder.
     }
 
     /// <summary>Записи, відсортовані за зростанням символу — саме так вони пишуться в пакет.</summary>

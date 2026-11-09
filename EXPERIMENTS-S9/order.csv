@@ -1,0 +1,3 @@
+order,raw_bits,table_bits,bitstream_bits,result_bits,ratio,exact_restore
+compress-first,288000,4096,192496,196592,1.4649629689916173,true
+encrypt-first,288000,4096,288000,292096,0.985977212971078,true

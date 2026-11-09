@@ -1,202 +1,70 @@
-# TelemetryLink — шаблон проєкту
+# TelemetryLink
 
-Проєкт 1. Захищений канал телеметрії з обмеженою пропускною здатністю.
+Навчальний проєкт захищеного передавання телеметрії через канал з обмеженням розміру пакетів, часу та з втратами. C# / .NET 10, консольний інтерфейс. Рішення: `TelemetryLink.slnx`.
 
-Це **скелет**: структура каталогів, інтерфейси, сигнатури методів і набір
-перевірок. Частину алгоритмів уже реалізовано; поточний стан описаний нижче. Кожна заглушка позначена
-`TODO(Sn)`, де `Sn` — крок із плану реалізації.
+Програма читає кадри, визначає їхній клас, обирає кадри для пакета, стискає, шифрує, підписує, передає через модель каналу та перевіряє відновлення. Реалізовано Гаффмана, рюкзак (перебір/DP/greedy), планувальники, MLP, random search і GA.
 
----
+## Запуск з чистого каталогу
 
-## Поточний стан — частина 10: випадковий пошук та генетичний алгоритм
-
-Реалізовано S8: обидва оптимізатори підбирають вікно 8–64, поріг стиснення 0.3–1.6 та вагу critical 0–3. Fitness — Q повного прогону. На кожен алгоритм витрачається рівно заданий бюджет, включно з бюджетом меншим за популяцію. GA має турнір, рівномірний кросовер, обмежену мутацію й елітизм без переоцінки.
+Встановіть .NET 10 SDK. Розпакуйте проєкт і відкрийте термінал у папці, де `TelemetryLink.slnx`. Дані вже лежать у `data/`, готова модель — у `EXPERIMENTS-S7/mlp.json`.
 
 ```bash
-dotnet run --project src/TelemetryLink.Cli -- optimize --optimizer random,ga --budget 200 --scenario emergency --classifier mlp --model EXPERIMENTS-S7/mlp.json --out results/optimization.csv
-dotnet run --project src/TelemetryLink.Cli -- run --scenario emergency --classifier mlp --model EXPERIMENTS-S7/mlp.json --tuning EXPERIMENTS-S8/optimization.ga.best.json
-dotnet test tests/TelemetryLink.Tests -m:1
+dotnet --version
+dotnet restore TelemetryLink.slnx
+dotnet build TelemetryLink.slnx -c Release -m:1
+dotnet test tests/TelemetryLink.Tests -c Release -m:1 --no-build
+dotnet run --project src/TelemetryLink.Cli -c Release --no-build -- verify
+dotnet run --project src/TelemetryLink.Cli -c Release --no-build -- run --scenario calm
 ```
 
-Зберігаються CSV історії, `.summary.json` та по одному `.ga.best.json` / `.random.best.json`. Файли best можна підключити через `--tuning` у run/compare. Явні `--window`, `--threshold`, `--critical-weight` перевизначають відповідні завантажені значення.
+Це варіант під .NET 10, а не попередня адаптація для VS 2022. Запуск із термінала не вимагає Visual Studio. Перший restore потребує доступу до NuGet. Версію SDK показує `dotnet --version`; якщо команда не знаходиться, перевідкрийте термінал після встановлення SDK.
 
-У прикладі `EXPERIMENTS-S8`: по 200 оцінок; random Q=0.626225, GA Q=0.625362. У цьому запуску random кращий. Q містить час виконання, тому однаковий seed не робить реальний fitness детермінованим; це один експеримент, а не доказ загальної переваги. Оцінки еліт зберігаються з моменту першого вимірювання. Для чистої детермінованої fitness послідовності кандидатів відтворюються тестами.
-
-Перевірено 336 тестів, без пропусків; verify 11/11; збірка без помилок і попереджень. Повний перелік змін — `STEP-10.md`. Наступний S9: фінальні експерименти й захист; зокрема шаблон експерименту порядку операцій ще потребує реалізації.
-
-## Частина 9: MLP та macro-F1
-
-Рішення `TelemetryLink.slnx`, .NET 10 SDK. Реалізовано власну нейромережу без ML-бібліотек: приховані ReLU, softmax, cross-entropy, backpropagation та SGD. Класи: 0 — норма, 1 — аномалія, 2 — перехідний стан.
-
-Навчання використовує часовий поділ TRAIN 80/20 (6400/1600 кадрів). Нормалізація та балансування класів обчислюються лише за навчальними 80%. Десять ознак використовують поточний кадр та минулу історію. Серед трьох ініціалізацій і їхніх епох обирається найкращий internal macro-F1. `valid.csv` оцінюється після вибору; він не використовується для налаштування ваг, scaler або вибору моделі.
-
-У збереженому прикладі: seed=2, epoch=3, internal macro-F1=0.8989; відкритий TEST macro-F1=0.8778 при мінімумі 0.58, accuracy=93.40%. Majority macro-F1=0.2922. Прихований набір викладача не перевірявся.
+## Основні команди
 
 ```bash
-dotnet build TelemetryLink.slnx -m:1
-dotnet run --project src/TelemetryLink.Cli -- train --out results/mlp.json
-dotnet run --project src/TelemetryLink.Cli -- run --classifier mlp --model EXPERIMENTS-S7/mlp.json
-dotnet run --project src/TelemetryLink.Cli -- compare --vary classifier=majority,mlp --model EXPERIMENTS-S7/mlp.json --out results/classifiers.csv
+dotnet run --project src/TelemetryLink.Cli -- inspect --session data/session.csv
 dotnet run --project src/TelemetryLink.Cli -- verify
-dotnet test tests/TelemetryLink.Tests -m:1
+dotnet run --project src/TelemetryLink.Cli -- run --scenario emergency --classifier mlp --model EXPERIMENTS-S7/mlp.json --out results/run.csv
+dotnet run --project src/TelemetryLink.Cli -- experiment --name order --out results/order.csv
+dotnet run --project src/TelemetryLink.Cli -- compare --vary packer=dp,greedy --classifier mlp --model EXPERIMENTS-S7/mlp.json --scenario calm,working,emergency --seeds 1001,1002,1003 --repeats 3 --warmup 1 --out results/packers.csv
+dotnet run --project src/TelemetryLink.Cli -- compare --ablation --classifier mlp --model EXPERIMENTS-S7/mlp.json --scenario calm,working,emergency --seeds 1001,1002,1003 --repeats 3 --warmup 1 --out results/ablation.csv
+dotnet run --project src/TelemetryLink.Cli -- optimize --optimizer random,ga --budget 200 --seed 1 --scenario emergency --classifier mlp --model EXPERIMENTS-S7/mlp.json --out results/optimization.csv
+dotnet run --project src/TelemetryLink.Cli -- run --scenario emergency --classifier mlp --model EXPERIMENTS-S7/mlp.json --tuning EXPERIMENTS-S8/optimization.ga.best.json
 ```
 
-`train` зберігає модель `.json`, звіт `.training.json` і журнал `.history.csv`. `--no-test` дозволяє навчання тільки з внутрішньою валідацією. Типово: `--window 8 --hidden 32,16 --epochs 12 --learning-rate 0.02 --inits 3 --seed 1`. Для `train` window — історія ознак; для `run` — вікно пакування. Історію моделі при запуску беруть із збереженої моделі.
+`run` виконує один сценарій; для трьох сценаріїв запускайте його окремо з calm, working, emergency. У `compare` можна перелічити їх через кому. `--strict` повертає ненульовий код, якщо перевищено поріг втрат critical. Без strict це попередження; неточне відновлення завжди є помилкою. ExactRestore перевіряє доставлені пакети, а не відсутність втрат каналу.
 
-За замовчуванням запуск лишається з `majority`; MLP вмикається через `--classifier mlp --model ...`. Macro-F1 оцінює класифікацію, Q — передачу телеметрії. Вища F1 не гарантує вищого Q: у збереженому порівнянні MLP не покращив Q. Час виконання та Q залежать від середовища.
+Без явних прапорців: huffman, dp, greedy scheduler, majority classifier. Для MLP потрібні обидва прапорці `--classifier mlp --model ...`. `--tuning` завантажує три параметри з best.json; явні --window/--threshold/--critical-weight їх перевизначають. Поріг стиснення порівнює кількість обраних кадрів при стисненні та без нього; це не значення у відсотках.
 
-Приклади цієї частини лежать у `EXPERIMENTS-S7`, точний перелік файлів і комміт — у `STEP-09.md`. Compare з попередньої частини підтримує прогрів, повтори, seed та три файли звітів. Оптимізатори S8 додані в частині 10. Нижче — довідка початкового шаблону.
-
-## Перший запуск
+## Навчання MLP
 
 ```bash
-cd <корінь цього каталогу>                   # там, де лежить TelemetryLink.slnx
-
-dotnet build                                 # має зібратися одразу
-dotnet test                                  # повний набір ще містить незавершені наступні етапи
-dotnet run --project src/TelemetryLink.Cli   # довідка по командах
+dotnet run --project src/TelemetryLink.Cli -- train --no-test --out results/internal.json
+dotnet run --project src/TelemetryLink.Cli -- train --out results/mlp.json
 ```
 
-Потрібен .NET 10 SDK. Комплект викладача розпакуйте в `data/`:
+TRAIN ділиться хронологічно 80/20. Scaler та балансування рахуються тільки за першими 80%. Ознаки причинні: поточний і попередні кадри. Перебираються щонайменше три ініціалізації та обирається найкраща внутрішня валідація. valid.csv читається лише після вибору. Для підбору параметрів використовуйте --no-test; підсумковий TEST не використовуйте для перебору моделей.
 
-```
-data/
-├── team_config.json
-├── channel.py            (довідково; у C# його вже перекладено)
-├── train.csv  valid.csv  session.csv  session.bin
-└── reference/  ref_*.bin  ref_*.json  bad_*.bin  expected_failures.json
-```
+Збережений результат частини 9: internal macro-F1=0.8989, open TEST macro-F1=0.8778 при порозі 0.58. У фінальній частині модель повторно не навчалася. Прихований holdout викладача не перевірявся. `--window` для train — історія ознак, для run — вікно пакування.
 
-`data/` шукається **відносно поточного каталогу терміналу**, а не каталогу
-проєкту. Якщо запускаєте не з кореня рішення або тримаєте комплект деінде:
+## Результати та обмеження
 
-```bash
-export TLM_DATA=/шлях/до/вашого/комплекту
-```
+П'ять фінальних таблиць — `RESULTS-S9.md`, короткі відповіді й карта коду — `DEFENSE.md`. Файли свіжих вимірів — `EXPERIMENTS-S9/`. Повний список змін цієї частини — `STEP-11.md`; попередні STEP та EXPERIMENTS збережені як історія.
 
-**Ваша мета:** зробити так, щоб `dotnet test` став зеленим, а
-`tlm verify` показав `11/11`.
+Q = 0.5*S + 0.35*R + 0.15*T. S=B_ref/(B_ref+B_sent), R — частка відновлених critical, T=20/(20+t). Пошкодження/неточне відновлення або R=0 дає Q=0. За відсутності critical R=1. Коефіцієнт стиснення й S — різні метрики.
 
----
+Час, T та Q залежать від комп'ютера. Повтори того самого seed не є незалежними реалізаціями каналу. GA не гарантує перевагу над random. Оптимізація Q не накладає жорсткого обмеження на втрату critical. Аварійний сценарій у збережених результатах перевищує допустимі 20%; це зазначено у таблицях.
 
-## Порядок роботи
+Експеримент order порівнює потік із байтовим доповненням та таблицю Гаффмана. Загальні витрати заголовка/salt/nonce/HMAC виключені з обох схем. Це лабораторне вимірювання обсягу, а не зміна робочого формату пакета. Salt і nonce випадкові; encrypt-first може мати трохи інший розмір при повторному запуску.
 
-Кроки виконуються **послідовно**. На кожному кроці система запускається
-і дає результат — ніколи не буває стану «зараз усе зламано».
+## Структура
 
-| Крок | Що робити | Готово, коли |
-|---|---|---|
-| **S0** | прочитати `FORMAT_SPEC.md`, розібрати `team_config.json` | `tlm inspect` друкує кадри сеансу |
-| **S1** | `BitWriter`, `BitReader`, `CodeTable`, навантаження, `NoCompressionCodec` | навантаження записується і читається назад побайтово |
-| **S2** | `SessionKeys`, `PacketCipher`, `PacketAuthenticator`, `PacketWriter/Reader` | `tlm inspect --packet data/reference/ref_01_single_frame.bin` збігається з `.json` |
-| **S3** | `HuffmanTreeBuilder`, `CanonicalCodes`, `CodeTable.TryDecodeNext`, `HuffmanCodec` | `tlm verify` показує `11/11` · **Чекпоінт 1** |
-| **S4** | `BruteForcePacker` → `DynamicProgrammingPacker` → `GreedyRatioPacker`, `Transmitter` | ДП збігається з перебором на 200 наборах |
-| **S5** | `ValueDensityScheduler` | три сценарії проходять без падіння |
-| **S6** | `QualityMetric`, `SessionRunner` | `tlm compare --vary packer=dp,greedy` друкує таблицю |
-| **S7** | `FeatureExtractor`, `MultilayerPerceptron`, `PerceptronTrainer`, `ClassificationReport` | `tlm train` дає `macro-F1 ≥ F1_min` · **Чекпоінт 2** |
-| **S8** | `RandomSearchOptimizer` → `GeneticOptimizer` | `tlm optimize --optimizer ga,random` · **Чекпоінт 3** |
-| **S9** | експерименти і звіт | п'ять таблиць звіту отримано командами |
+- `src/TelemetryLink.Core/` — алгоритми, формат, криптографія, тракт і метрики.
+- `src/TelemetryLink.Cli/` — команди, параметри й експорт.
+- `tests/TelemetryLink.Tests/` — модульні та приймальні перевірки.
+- `data/` — комплект даних і еталонів викладача.
+- `EXPERIMENTS-S7/` — готова модель MLP та протокол навчання.
+- `EXPERIMENTS-S8/` — приклад оптимізації частини 10.
+- `EXPERIMENTS-S9/` — фінальні виміри.
 
-Докладно, з переліком пасток і тестів на кожному кроці —
-`../../decomposition/02-implementation-plan.md`.
-
----
-
-## Що вже написано за вас
-
-| Каталог | Стан | Чому |
-|---|---|---|
-| `Domain/` | **готово** | серіалізація кадру — не тема курсу |
-| `Configuration/` | **готово** | читання JSON — не тема курсу |
-| `InputOutput/` | **готово** | читання CSV — не тема курсу |
-| `Channel/` | **видано готовим** | модель каналу не є темою дисципліни; **змінювати не можна** |
-| `Cli/` | **готово** | розбір аргументів і друк — не тема курсу |
-| `AlgorithmCatalog.cs` | **готово** | реєстр «ім'я → реалізація» |
-| усі інтерфейси | **готово** | це контракт, погоджений на Зрізі 0 |
-| решта `Core/` | **заглушки** | це і є ваша робота |
-
-`MarkovChannel` — точний переклад `channel.py`, включно з генератором
-випадкових чисел: при тому самому seed послідовність втрат збігається з
-еталонною. Не міняйте його — результати перестануть бути порівнянними.
-
----
-
-## Що можна і чого не можна
-
-**Дозволені бібліотеки:** AES і SHA-256 (`System.Security.Cryptography`),
-робота з файлами, побудова графіків, автотестування.
-
-**Пишуться самостійно:** Гаффман, канонічні коди, динамічне програмування,
-жадібні алгоритми, перцептрон (прямий прохід і зворотне поширення),
-генетичний алгоритм.
-
----
-
-## Як додати свій алгоритм
-
-Два кроки, більше нічого:
-
-1. новий файл у відповідному каталозі, що реалізує інтерфейс
-   (`ISymbolCodec`, `IFramePacker`, `ISendScheduler`, `IFrameClassifier`,
-   `IParameterOptimizer`);
-2. один рядок в `AlgorithmCatalog`.
-
-Після цього він доступний із командного рядка:
-
-```bash
-tlm run --packer мій-алгоритм --scenario emergency
-tlm compare --vary packer=dp,мій-алгоритм
-```
-
-Тракт, формат, криптографія і CLI при цьому не змінюються. Саме так
-додаються просунуті й експертні механізми: адаптивний Гаффман, арифметичне
-кодування, ДП-розбиття потоку, дублювання критичних кадрів.
-
----
-
-## Тести
-
-| Файл | Стан |
-|---|---|
-| `ReferencePacketTests.cs` | **готовий, не змінюйте** — перевірка на пакетах викладача |
-| `AcceptanceCaseTests.cs` | **готовий, не змінюйте** — 12 приймальних кейсів C1 |
-| `HuffmanTests.cs` | зразок стилю: по одному тесту кожної категорії + заготовки |
-| `TestsToWrite.cs` | перелік усіх тестів, які треба написати |
-
-Чотири категорії сценаріїв, які має покривати кожен компонент:
-
-| Категорія | Що перевіряє |
-|---|---|
-| **стандартний** | типовий вхід, очікуваний результат |
-| **крайній** | вироджений вхід, межа діапазону, порожні дані |
-| **хибний** | некоректний вхід → визначена відмова, а не виняток |
-| **інваріант** | властивість, яка має триматися завжди |
-
-Назва тесту пояснює сценарій: `Read_WrongPassword_ReturnsEHmac`, а не `Test3`.
-Один тест — одна причина падіння.
-
----
-
-## Три речі, на яких ламаються найчастіше
-
-**1. Таблиця Гаффмана будується ДО вибору кадрів, за всім вікном кандидатів.**
-Якщо будувати її після вибору, вага кадру залежить від того, які кадри
-обрано, а вибір залежить від ваг. Задача про рюкзак стає невизначеною.
-
-**2. Приймач перевіряє HMAC ДО розшифрування.**
-Невірний пароль має дати `E_HMAC`, а не спотворені кадри. Розшифрування не
-повинно навіть початися.
-
-**3. Приймач ніколи не кидає виняток на поганих даних.**
-Канал псує і втрачає пакети — це нормальний режим роботи. Відмова — штатний
-результат (`RejectionCode`), а не виняткова ситуація.
-
----
-
-## Обов'язкові артефакти
-
-- `META-USAGE.md` — декларація використання інструментів ШІ, заповнює кожен
-  учасник. Без неї застосовується множник академічної доброчесності.
-- Журнал еволюції ГА (`results/optimization.csv`) — зберігається в репозиторії.
-- Фінальний `README` з командою запуску: інша людина має відтворити всі
-  результати без вашої участі.
+Сторонні ML-бібліотеки не використовуються. AES/SHA/HMAC/PBKDF2 беруться з System.Security.Cryptography; схема CTR, формат та порядок перевірок реалізовані в проєкті.

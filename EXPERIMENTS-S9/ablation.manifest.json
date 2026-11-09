@@ -1,0 +1,170 @@
+{
+  "schemaVersion": 1,
+  "createdUtc": "2026-11-09T14:31:53.2845495+00:00",
+  "runtime": ".NET 10.0.14",
+  "os": "Ubuntu 24.04.3 LTS",
+  "architecture": "X64",
+  "processorCount": 8,
+  "inputs": {
+    "session": {
+      "fileName": "session.csv",
+      "sha256": "db5d92746846a9ee14c16eb59b5b97bd816a82bb39efb00e9ccfbd06ff67406f"
+    },
+    "config": {
+      "fileName": "team_config.json",
+      "sha256": "49ca1de019c0e3f2c6e644372b491efab21ba51dbe731ed3a88873f740019690"
+    },
+    "model": {
+      "fileName": "mlp.json",
+      "sha256": "c77a300dc4649d93e58d7587d1f7ecac86d7849ab1881c6edf85b691d532f186"
+    }
+  },
+  "protocol": {
+    "dimension": "ablation",
+    "ablation": true,
+    "repeats": 3,
+    "warmup": 1,
+    "channelSeeds": [
+      1001,
+      1002,
+      1003
+    ],
+    "baseline": "baseline",
+    "order": "rotation by repetition",
+    "warmupIncludedInStatistics": false,
+    "fixedSeedRepeatsAreIndependentChannelSamples": false,
+    "stdDev": "sample SD (n-1); zero by convention for n=1",
+    "delta": "paired by scenario, channel_seed and repeat"
+  },
+  "variants": [
+    {
+      "name": "baseline",
+      "reuseBaseline": false,
+      "note": "\u041F\u043E\u0442\u043E\u0447\u043D\u0430 \u043A\u043E\u043D\u0444\u0456\u0433\u0443\u0440\u0430\u0446\u0456\u044F; classifier=mlp.",
+      "codec": "huffman",
+      "packer": "dp",
+      "scheduler": "greedy",
+      "classifier": "mlp",
+      "tuning": {
+        "windowFrames": 64,
+        "compressionThreshold": 0.5,
+        "criticalWeight": 1
+      },
+      "deviceId": 1
+    },
+    {
+      "name": "no-compression",
+      "reuseBaseline": false,
+      "note": null,
+      "codec": "none",
+      "packer": "dp",
+      "scheduler": "greedy",
+      "classifier": "mlp",
+      "tuning": {
+        "windowFrames": 64,
+        "compressionThreshold": 0.5,
+        "criticalWeight": 1
+      },
+      "deviceId": 1
+    },
+    {
+      "name": "greedy-packer",
+      "reuseBaseline": false,
+      "note": null,
+      "codec": "huffman",
+      "packer": "greedy",
+      "scheduler": "greedy",
+      "classifier": "mlp",
+      "tuning": {
+        "windowFrames": 64,
+        "compressionThreshold": 0.5,
+        "criticalWeight": 1
+      },
+      "deviceId": 1
+    },
+    {
+      "name": "sequential-scheduler",
+      "reuseBaseline": false,
+      "note": null,
+      "codec": "huffman",
+      "packer": "dp",
+      "scheduler": "sequential",
+      "classifier": "mlp",
+      "tuning": {
+        "windowFrames": 64,
+        "compressionThreshold": 0.5,
+        "criticalWeight": 1
+      },
+      "deviceId": 1
+    },
+    {
+      "name": "majority-classifier",
+      "reuseBaseline": false,
+      "note": null,
+      "codec": "huffman",
+      "packer": "dp",
+      "scheduler": "greedy",
+      "classifier": "majority",
+      "tuning": {
+        "windowFrames": 64,
+        "compressionThreshold": 0.5,
+        "criticalWeight": 1
+      },
+      "deviceId": 1
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "calm",
+      "ukrainianName": "\u0441\u043F\u043E\u043A\u0456\u0439\u043D\u0438\u0439",
+      "lossProbability": 0,
+      "burstMeanLength": 1,
+      "delayKind": 0,
+      "delayConstantMs": 20,
+      "delayLowMs": 0,
+      "delayHighMs": 0,
+      "bandwidthBitsPerSecond": 64000,
+      "transmissionBudgetSeconds": 72.5,
+      "badStateProbability": 0
+    },
+    {
+      "name": "working",
+      "ukrainianName": "\u0440\u043E\u0431\u043E\u0447\u0438\u0439",
+      "lossProbability": 0.03,
+      "burstMeanLength": 1,
+      "delayKind": 1,
+      "delayConstantMs": 0,
+      "delayLowMs": 20,
+      "delayHighMs": 120,
+      "bandwidthBitsPerSecond": 32000,
+      "transmissionBudgetSeconds": 72.5,
+      "badStateProbability": 0.03
+    },
+    {
+      "name": "emergency",
+      "ukrainianName": "\u0430\u0432\u0430\u0440\u0456\u0439\u043D\u0438\u0439",
+      "lossProbability": 0.15,
+      "burstMeanLength": 3,
+      "delayKind": 1,
+      "delayConstantMs": 0,
+      "delayLowMs": 50,
+      "delayHighMs": 500,
+      "bandwidthBitsPerSecond": 12000,
+      "transmissionBudgetSeconds": 16.9,
+      "badStateProbability": 0.05555555555555556
+    }
+  ],
+  "metric": {
+    "alpha": 0.5,
+    "beta": 0.35,
+    "gamma": 0.15,
+    "referenceTimeSeconds": 20
+  },
+  "rows": 135,
+  "measuredRuns": 135,
+  "files": [
+    "ablation.csv",
+    "ablation.summary.csv",
+    "ablation.manifest.json"
+  ]
+}

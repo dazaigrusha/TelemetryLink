@@ -110,7 +110,7 @@ static int Help()
           tlm train --out model.json
           tlm run --classifier mlp --model model.json --scenario emergency
           tlm optimize --optimizer ga,random --budget 60
-          tlm experiment --name order
+          tlm experiment --name order --out results/order.csv
           tlm inspect --packet data/reference/ref_01_single_frame.bin
 
         """
