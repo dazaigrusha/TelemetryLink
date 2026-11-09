@@ -22,7 +22,7 @@ public sealed class SessionRunner
     }
 
     /// <param name="channel">Необов'язковий канал для тестування; типово незмінена модель викладача.</param>
-    public SessionReport Run(TelemetrySession session, ScenarioConfig scenario, int channelSeed, IChannel? channel = null)
+    public SessionReport Run(TelemetrySession session, ScenarioConfig scenario, int channelSeed, IChannel? channel = null, PacketDecoder? decoder = null)
     {
         var stopwatch = Stopwatch.StartNew();
         byte[] salt = SessionKeys.GenerateSalt();
@@ -35,9 +35,10 @@ public sealed class SessionRunner
             .SequenceEqual(packets.Select(p => p.Sequence).OrderBy(i => i)))
             throw new InvalidOperationException("Планувальник має повернути перестановку сформованих пакетів.");
         channel ??= new MarkovChannel(scenario, channelSeed);
-        var receiver = new Receiver(keys);
+        var receiver = new Receiver(keys, decoder);
         var recovered = new HashSet<int>();
         bool exact = true;
+        bool receiverCrashed = false;
         long sentBits = 0;
         int deliveredValue = 0;
         foreach (var packet in scheduled)
@@ -47,7 +48,17 @@ public sealed class SessionRunner
             // Втрачені пакети витрачають смугу, over-budget — ні.
             if (channel.Statistics.Sent > sentBefore) sentBits += (long)packet.SizeInBytes * 8;
             if (!transmission.Delivered) continue;
-            var result = receiver.Accept(packet.Bytes);
+            if (receiverCrashed) continue;
+            Format.ReceiveResult result;
+            try { result = receiver.Accept(packet.Bytes); }
+            catch (Exception exception) when (exception is not (OutOfMemoryException or OperationCanceledException))
+            {
+                // Порушення декодера — провал приймання, а не успішний прогін.
+                // Вміст пакета та текст винятку у звіт не потрапляють.
+                receiverCrashed = true;
+                exact = false;
+                continue;
+            }
             if (!result.IsAccepted)
             {
                 exact = false;
@@ -68,6 +79,7 @@ public sealed class SessionRunner
         return new SessionReport
         {
             ScenarioName = scenario.Name,
+            ChannelSeed = channelSeed,
             CodecName = _options.Codec.Name,
             PackerName = _options.Packer.Name,
             SchedulerName = _options.Scheduler.Name,
@@ -87,10 +99,13 @@ public sealed class SessionRunner
             SelectedValue = packets.Sum(p => p.Value),
             DeliveredValue = deliveredValue,
             ExactRestore = exact,
+            ReceiverCrashed = receiverCrashed,
             Channel = channel.Statistics,
             Rejections = new Dictionary<Format.RejectionCode, int>(receiver.Rejections),
-            S = s, R = r, T = t,
-            Q = exact ? QualityMetric.Combine(_config, s, r, t) : 0.0
+            S = s,
+            R = r,
+            T = t,
+            Q = QualityMetric.Combine(_config, s, r, t, receiverHealthy: exact && !receiverCrashed)
         };
     }
 }

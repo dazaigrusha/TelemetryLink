@@ -3,46 +3,34 @@ using TelemetryLink.Core.Pipeline;
 
 namespace TelemetryLink.Cli.Commands;
 
-/// <summary>
-/// Порівняння алгоритмів — головна команда для експериментальної частини звіту.
-///
-/// Міняється РІВНО ОДИН компонент тракту, решта лишається незмінною. Це пряма
-/// вимога методики: один експеримент — одна зміна. Інакше неможливо сказати,
-/// що саме дало різницю.
-/// </summary>
+/// <summary>Одна зміна алгоритму, однакові вхідні дані та seed, повтори й експорт повних вимірів.</summary>
 public static class CompareCommand
 {
     public static int Execute(CommandLineOptions options)
     {
         var context = new CommandContext(options);
+        var settings = ComparisonSettings.Parse(options, context.Config.ChannelSeed);
         var session = context.LoadSession();
-        string[] scenarios = options.List("scenario", "calm", "working", "emergency");
-
-        if (options.Has("ablation")) return Ablation(context, session, scenarios, options);
-
-        // --vary packer=dp,greedy
-        string vary = options.Value("vary", "packer=dp,greedy");
-        var parts = vary.Split('=', 2);
-        string dimension = parts[0].Trim();
-        string[] variants = parts.Length > 1
-            ? parts[1].Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            : ["dp", "greedy"];
-
-        var reports = new List<SessionReport>();
-        foreach (string scenarioName in scenarios)
-        {
-            var scenario = context.Config.Scenario(scenarioName);
-            foreach (string variant in variants)
-            {
-                var pipeline = BuildVariant(context, dimension, variant);
-                reports.Add(new SessionRunner(context.Config, pipeline)
-                    .Run(session, scenario, context.ChannelSeed));
-            }
-        }
-
-        ReportRenderer.PrintComparison(dimension, $"{dimension} ∈ {{{string.Join(", ", variants)}}}", reports);
-        ReportRenderer.WriteCsv(options.Value("out", $"results/compare_{dimension}.csv"), reports);
-        return 0;
+        var scenarios = settings.Scenarios.Select(context.Config.Scenario).ToArray();
+        var variants = settings.Ablation ? Ablation(context) : settings.Variants
+            .Select(name => new ExperimentVariant(name, BuildVariant(context, settings.Dimension, name))).ToArray();
+        // Усі варіанти перевіряються ДО першого вимірювання, включно з межами brute.
+        if (variants.Any(v => v.Options.Packer.Name == "brute" && v.Options.Tuning.WindowFrames > 20))
+            throw new ArgumentException("Для порівняння з brute задайте однакове --window <= 20 всім варіантам.");
+        string output = options.Has("out") ? options.Require("out")
+            : settings.Ablation ? "results/ablation.csv" : $"results/compare_{settings.Dimension}.csv";
+        ExperimentExporter.ValidateDestinations(output,
+            options.Value("session", Path.Combine(CommandContext.DataDirectory, "session.csv")),
+            options.Value("config", Path.Combine(CommandContext.DataDirectory, "team_config.json")), options.Value("model"));
+        Console.WriteLine($"Прогрівів: {settings.Warmup}; повторів: {settings.Repeats}; seed: {string.Join(",", settings.Seeds)}.");
+        var runs = ComparisonExperiment.Run(variants, scenarios, settings.Seeds, settings.Repeats, settings.Warmup,
+            (variant, scenario, seed) => new SessionRunner(context.Config, variant.Options).Run(session, scenario, seed));
+        var summaries = ComparisonExperiment.Summarize(runs, variants[0].Name);
+        ExperimentExporter.Print(summaries, variants);
+        ExperimentExporter.Write(output, settings, variants, runs, summaries, context.Config, options);
+        if (runs.Any(r => !r.Report.ExactRestore)) return 1;
+        return options.Has("strict") && runs.Any(r => r.Report.CriticalLossRatio
+            > context.Config.CriticalLossThreshold(r.Report.ScenarioName) + 1e-9) ? 1 : 0;
     }
 
     private static PipelineOptions BuildVariant(CommandContext context, string dimension, string variant)
@@ -52,61 +40,29 @@ public static class CompareCommand
             "packer" => context.BuildPipeline(packer: variant),
             "scheduler" => context.BuildPipeline(scheduler: variant),
             "classifier" => context.BuildPipeline(classifier: variant),
-            _ => throw new ArgumentException(
-                $"Невідомий вимір '{dimension}'. Доступні: codec, packer, scheduler, classifier.")
+            _ => throw new ArgumentException("Невідомий вимір порівняння.")
         };
 
-    /// <summary>
-    /// Таблиця 2 звіту: Q повної системи і Q системи з вимкненим по черзі
-    /// кожним блоком. Нульовий виграш — теж результат, і його треба пояснити,
-    /// а не сховати.
-    /// </summary>
-    private static int Ablation(
-        CommandContext context,
-        Core.InputOutput.TelemetrySession session,
-        string[] scenarios,
-        CommandLineOptions options)
+    private static ExperimentVariant[] Ablation(CommandContext context)
     {
-        (string Label, PipelineOptions Pipeline)[] variants =
-        [
-            ("повна система", context.BuildPipeline()),
-            ("без стиснення", context.BuildPipeline(codec: "none")),
-            ("без ДП (жадібно)", context.BuildPipeline(packer: "greedy")),
-            ("без планувальника", context.BuildPipeline(scheduler: "sequential")),
-            ("без класифікатора", context.BuildPipeline(classifier: "majority"))
-        ];
-
-        Console.WriteLine();
-        Console.WriteLine("вплив кожного блоку: Q повної системи і з вимкненим блоком");
-        Console.WriteLine();
-        Console.WriteLine($"{"варіант",-22}" + string.Join("", scenarios.Select(s => $"{s,18}")));
-        Console.WriteLine(new string('-', 22 + 18 * scenarios.Length));
-
-        var all = new List<SessionReport>();
-        var baseline = new Dictionary<string, double>();
-
-        foreach (var (label, pipeline) in variants)
+        var baseline = context.BuildPipeline();
+        ExperimentVariant Variant(string name, string dimension, string value)
         {
-            var line = new List<string>();
-            foreach (string scenarioName in scenarios)
+            var changed = BuildVariant(context, dimension, value);
+            bool same = dimension switch
             {
-                var report = new SessionRunner(context.Config, pipeline)
-                    .Run(session, context.Config.Scenario(scenarioName), context.ChannelSeed);
-                all.Add(report);
-
-                if (label == "повна система") baseline[scenarioName] = report.Q;
-
-                string delta = label == "повна система"
-                    ? ""
-                    : $" ({report.Q - baseline[scenarioName]:+0.000;-0.000;0.000})";
-                line.Add($"{report.Q:F4}{delta}");
-            }
-
-            Console.WriteLine($"{label,-22}" + string.Join("", line.Select(v => $"{v,18}")));
+                "codec" => baseline.Codec.Name == value,
+                "packer" => baseline.Packer.Name == value,
+                "scheduler" => baseline.Scheduler.Name == value,
+                "classifier" => baseline.Classifier.Name == value,
+                _ => false
+            };
+            return new(name, changed, same, same
+                ? "Без зміни конфігурації: використано базові виміри, ΔQ=0; це не окремий експеримент."
+                : null);
         }
-
-        Console.WriteLine();
-        ReportRenderer.WriteCsv(options.Value("out", "results/ablation.csv"), all);
-        return 0;
+        return [new("baseline", baseline, Note: "Поточна конфігурація; MLP з'явиться у наступній частині."),
+            Variant("no-compression", "codec", "none"), Variant("greedy-packer", "packer", "greedy"),
+            Variant("sequential-scheduler", "scheduler", "sequential"), Variant("majority-classifier", "classifier", "majority")];
     }
 }

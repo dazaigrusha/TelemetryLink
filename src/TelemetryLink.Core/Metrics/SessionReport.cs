@@ -40,12 +40,12 @@ public static class QualityMetric
         return referenceSeconds / (referenceSeconds + elapsedSeconds);
     }
 
-    public static double Combine(TeamConfig config, double s, double r, double t)
+    public static double Combine(TeamConfig config, double s, double r, double t, bool receiverHealthy = true)
     {
         if (new[] { s, r, t }.Any(v => !double.IsFinite(v) || v < 0 || v > 1))
             throw new ArgumentOutOfRangeException(nameof(s));
         // За відсутності critical у сеансі CriticalRecovery повертає 1.
-        if (r == 0) return 0;
+        if (!receiverHealthy || r == 0) return 0;
         return config.Alpha * s + config.Beta * r + config.Gamma * t;
     }
 }
@@ -54,6 +54,7 @@ public static class QualityMetric
 public sealed record SessionReport
 {
     public required string ScenarioName { get; init; }
+    public int ChannelSeed { get; init; }
     public required string CodecName { get; init; }
     public required string PackerName { get; init; }
     public required string SchedulerName { get; init; }
@@ -90,6 +91,8 @@ public sealed record SessionReport
 
     /// <summary>Усі доставлені пакети відновилися ПОБАЙТОВО точно.</summary>
     public required bool ExactRestore { get; init; }
+
+    public bool ReceiverCrashed { get; init; }
 
     public required ChannelStatistics Channel { get; init; }
     public required IReadOnlyDictionary<RejectionCode, int> Rejections { get; init; }

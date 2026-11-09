@@ -3,6 +3,9 @@ using TelemetryLink.Core.Security;
 
 namespace TelemetryLink.Core.Pipeline;
 
+/// <summary>Точка підміни декодера для перевірки обробки збоїв приймача.</summary>
+public delegate ReceiveResult PacketDecoder(ReadOnlySpan<byte> packet, SessionKeys keys);
+
 /// <summary>
 /// Приймач: пакет → кадри або код відмови.
 ///
@@ -15,9 +18,14 @@ namespace TelemetryLink.Core.Pipeline;
 public sealed class Receiver
 {
     private readonly SessionKeys _keys;
+    private readonly PacketDecoder _decoder;
     private readonly Dictionary<RejectionCode, int> _rejections = new();
 
-    public Receiver(SessionKeys keys) => _keys = keys;
+    public Receiver(SessionKeys keys, PacketDecoder? decoder = null)
+    {
+        _keys = keys;
+        _decoder = decoder ?? PacketReader.Read;
+    }
 
     public int AcceptedCount { get; private set; }
 
@@ -25,7 +33,7 @@ public sealed class Receiver
 
     public ReceiveResult Accept(ReadOnlySpan<byte> packet)
     {
-        var result = PacketReader.Read(packet, _keys);
+        var result = _decoder(packet, _keys);
         if (result.IsAccepted) AcceptedCount++;
         else _rejections[result.Code] = _rejections.GetValueOrDefault(result.Code) + 1;
         return result;

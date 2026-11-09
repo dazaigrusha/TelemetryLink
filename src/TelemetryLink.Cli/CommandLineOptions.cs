@@ -39,14 +39,19 @@ public sealed class CommandLineOptions
     public string Require(string key) =>
         _values.GetValueOrDefault(key) ?? throw new ArgumentException($"Не задано обов'язковий параметр --{key}.");
 
-    public int Value(string key, int fallback) =>
-        _values.TryGetValue(key, out string? text) && int.TryParse(text, out int parsed) ? parsed : fallback;
+    public int Value(string key, int fallback)
+    {
+        if (!_values.TryGetValue(key, out string? text)) return fallback;
+        return int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out int value)
+            ? value : throw new ArgumentException($"--{key}: очікується ціле число.");
+    }
 
-    public double Value(string key, double fallback) =>
-        _values.TryGetValue(key, out string? text) &&
-        double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed)
-            ? parsed
-            : fallback;
+    public double Value(string key, double fallback)
+    {
+        if (!_values.TryGetValue(key, out string? text)) return fallback;
+        return double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out double value)
+            && double.IsFinite(value) ? value : throw new ArgumentException($"--{key}: очікується скінченне число з десятковою крапкою.");
+    }
 
     /// <summary>Список через кому: --scenario calm,working,emergency</summary>
     public string[] List(string key, params string[] fallback)

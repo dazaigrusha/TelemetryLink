@@ -17,10 +17,6 @@ namespace TelemetryLink.Tests;
 /// </summary>
 public class MetricsTests
 {
-    [Fact(Skip = "TODO(S6) [С]: Q — зважена сума компонент")] public void Q_EqualsWeightedSum_OfComponents() { }
-    [Fact(Skip = "TODO(S6) [К]: жодного критичного кадру не відновлено → Q = 0")] public void Q_IsZero_WhenNoCriticalFrameRecovered() { }
-    [Fact(Skip = "TODO(S6) [К]: у сеансі немає критичних кадрів → R = 1, не NaN")] public void R_NoCriticalFramesInSession_IsOne_NotNaN() { }
-    [Fact(Skip = "TODO(S6) [І]: усі компоненти в [0,1]")] public void AllComponents_StayWithinZeroToOne() { }
     [Fact(Skip = "TODO(S7) [К]: ідеальний прогноз → macro-F1 = 1")] public void MacroF1_OfPerfectPrediction_IsOne() { }
     [Fact(Skip = "TODO(S7) [С]: ігнорування найменшого класу карається")] public void MacroF1_PunishesIgnoringSmallestClass() { }
     [Fact(Skip = "TODO(S7) [К]: клас відсутній у прогнозі → 0, а не NaN")] public void MacroF1_ClassAbsentFromPrediction_IsZero_NotNaN() { }

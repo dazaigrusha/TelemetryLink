@@ -8,20 +8,21 @@
 
 ---
 
-## Поточний стан — частина 7: жадібний планувальник
+## Поточний стан — частина 8: порівняння та звітність
 
-.NET 10, рішення TelemetryLink.slnx. Додано ValueDensityScheduler: передає пакети за спаданням цінності на байт, при однаковій щільності — за номером пакета. Номери та байти пакетів залишаються незмінними. Типова конфігурація тепер huffman + dp + greedy + majority.
+.NET 10, рішення TelemetryLink.slnx. Compare тепер виконує прогрів (типово 1) та повтори (типово 3), підтримує список seed, ротацію порядку варіантів, середні значення, описовий SD і парні ΔQ. Один експеримент змінює один компонент.
 
 ```bash
-dotnet run --project src/TelemetryLink.Cli -- run --scenario calm
-dotnet run --project src/TelemetryLink.Cli -- run --scenario emergency --scheduler greedy
-dotnet run --project src/TelemetryLink.Cli -- compare --vary scheduler=sequential,greedy --scenario calm,working,emergency --out results/schedulers.csv
+dotnet build TelemetryLink.slnx -m:1
+dotnet run --project src/TelemetryLink.Cli -- compare --vary packer=sequential,greedy,dp --scenario calm,working,emergency --out results/packers.csv
+dotnet run --project src/TelemetryLink.Cli -- compare --vary scheduler=sequential,greedy --seeds 425243,425244 --repeats 3 --warmup 1 --out results/schedulers.csv
+dotnet run --project src/TelemetryLink.Cli -- compare --ablation --out results/ablation.csv
 dotnet run --project src/TelemetryLink.Cli -- verify
 ```
 
-Для порівняння планувальників решта компонентів і seed однакові. Жадібний порядок — евристика, а не гарантія найвищого Q для будь-якого сценарію. Деталі, результати та комміт — у STEP-07.md.
+Для кожного compare зберігаються файл вимірів .csv, підсумок .summary.csv та параметри/хеші даних .manifest.json. Прогрів до вимірів не входить. Повтори того самого seed не є незалежними вибірками каналу. У ablation незмінена конфігурація явно позначається як reused_baseline, а не вимірюється наново.
 
-Навчання MLP, оптимізатори та фінальні експерименти ще попереду. Старі CSV залишено для історичного порівняння. Повний dotnet test містить заглушки наступних етапів; поточний фільтр наведений у STEP-07.md. Нижче — довідка початкового шаблону.
+Приклади є у EXPERIMENTS-S6; повна інструкція й комміт — у STEP-08.md. Час, T та Q залежать від середовища. Навчання MLP, macro-F1 та оптимізатори ще не реалізовані. Старі CSV лишилися історичними прикладами. Нижче — довідка початкового шаблону.
 
 ## Перший запуск
 

@@ -34,7 +34,9 @@ public static class ReportRenderer
 
         Console.WriteLine();
         Console.WriteLine($"  S = {report.S:F4}    R = {report.R:F4}    T = {report.T:F4}");
-        if (!report.ExactRestore)
+        if (report.ReceiverCrashed)
+            Console.WriteLine("  Q = 0: збій приймача; прогін вважається невдалим.");
+        else if (!report.ExactRestore)
             Console.WriteLine("  Q = 0: порушено точне відновлення доставлених даних.");
         else if (report.CriticalFrameCount > 0 && report.RecoveredCriticalFrameCount == 0)
             Console.WriteLine("  Q = 0: не відновлено жодного критичного кадру.");
@@ -134,10 +136,12 @@ public static class ReportRenderer
     {
         var builder = new StringBuilder();
         builder.AppendLine("scenario,codec,packer,scheduler,classifier,frames,critical,recovered_critical," +
-                           "reference_bits,sent_bits,elapsed_ms,packets_built,packets_accepted,value,delivered_value,compression_ratio,S,R,T,Q");
+                           "reference_bits,sent_bits,elapsed_ms,packets_built,packets_accepted,value,delivered_value,compression_ratio,S,R,T,Q," +
+                           "recovered_frames,built_bits,packed_frames,window,compression_threshold,critical_weight," +
+                           "packets_sent,packets_lost,packets_over_budget,channel_time_s,critical_loss,exact_restore,receiver_crashed,channel_seed");
 
         foreach (var r in reports)
-            builder.AppendLine(string.Join(',',
+            builder.AppendLine(ExperimentExporter.CsvRow(
                 r.ScenarioName, r.CodecName, r.PackerName, r.SchedulerName, r.ClassifierName,
                 r.FrameCount, r.CriticalFrameCount, r.RecoveredCriticalFrameCount,
                 r.ReferenceBits, r.SentBits,
@@ -145,7 +149,11 @@ public static class ReportRenderer
                 r.PacketsBuilt, r.PacketsAccepted, r.SelectedValue, r.DeliveredValue,
                 r.CompressionRatio.ToString("F4", Culture),
                 r.S.ToString("F6", Culture), r.R.ToString("F6", Culture),
-                r.T.ToString("F6", Culture), r.Q.ToString("F6", Culture)));
+                r.T.ToString("F6", Culture), r.Q.ToString("F6", Culture),
+                r.RecoveredFrameCount, r.BuiltBits, r.PackedFrameCount, r.Tuning.WindowFrames,
+                r.Tuning.CompressionThreshold, r.Tuning.CriticalWeight, r.Channel.Sent, r.Channel.Lost,
+                r.Channel.OverBudget, r.Channel.ChannelTimeSeconds, r.CriticalLossRatio, r.ExactRestore,
+                r.ReceiverCrashed, r.ChannelSeed));
 
         EnsureDirectory(path);
         File.WriteAllText(path, builder.ToString());

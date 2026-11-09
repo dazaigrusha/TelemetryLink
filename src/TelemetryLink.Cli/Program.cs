@@ -58,6 +58,15 @@ static int Help()
           --password <рядок>   пароль сеансу
           --out <шлях>         куди записати CSV або JSON
 
+        Порівняння
+          --vary <вимір=a,b>   codec | packer | scheduler | classifier
+          --ablation          вимкнення по одному блоку поточної конфігурації
+          --repeats <n>       повторів на кожен seed, типово 3
+          --warmup <n>        прогрівів, типово 1; не входять до CSV
+          --seeds <a,b>       явний список seed (або один --channel-seed)
+          --out <file.csv>    повні виміри + .summary.csv + .manifest.json
+          --strict           ненульовий код при перевищенні порогу втрати critical
+
         Вибір алгоритмів
           --codec       {CODECS}
           --packer      {PACKERS}
