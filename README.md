@@ -1,117 +1,353 @@
 # TelemetryLink
 
-Навчальний проєкт захищеного передавання телеметрії через канал з обмеженням розміру пакетів, часу та з втратами. C# / .NET 10, консольний інтерфейс. Рішення: `TelemetryLink.slnx`.
+Консольна програма для моделювання захищеного передавання телеметрії через канал з обмеженою пропускною здатністю та втратами.
 
-Програма читає кадри, визначає їхній клас, обирає кадри для пакета, стискає, шифрує, підписує, передає через модель каналу та перевіряє відновлення. Реалізовано Гаффмана, рюкзак (перебір/DP/greedy), планувальники, MLP, random search і GA.
+Програма читає записаний сеанс, визначає класи кадрів, формує пакети, стискає дані методом Гаффмана, шифрує їх AES-CTR та перевіряє HMAC на приймачі. Після передавання показує, скільки даних відновлено, чому решта не дійшла та якою є підсумкова якість Q. Передавання відбувається через програмну модель каналу.
 
-## Частина 14: підбір параметрів із контролем надійності
+**Для першого знайомства достатньо розділів 1–3.** Навчання та оптимізація — окремі можливості: готові модель і параметри вже включені в проєкт.
 
-Новий режим `optimize --objective reliable` оцінює кожен набір генів на кількох сценаріях і seed. Допустимий кандидат мусить виконати поріг втрат та точне відновлення у КОЖНОМУ прогоні. Допустимі кандидати завжди випереджають недопустимі; серед допустимих обирається найбільша середня Q. Пошук і відкладена перевірка мають окремі seed. Обидва переможці фіксуються до початку validation.
+## 1. Перший запуск
 
-```bash
-dotnet run --project src/TelemetryLink.Cli -- optimize --objective reliable --optimizer random,ga --budget 24 --population 8 --search-seeds 4001,4002,4003 --validation-seeds 5001,5002,5003,5004,5005 --delivery critical-repeat --critical-copies 2 --repeat-gap 8 --classifier mlp --model EXPERIMENTS-S7/mlp.json --strict --out results/reliable.csv
-dotnet run --project src/TelemetryLink.Cli -- run --scenario emergency --delivery critical-repeat --critical-copies 2 --repeat-gap 8 --classifier mlp --model EXPERIMENTS-S7/mlp.json --tuning EXPERIMENTS-S12/reliable.ga.best.json --strict
+### Крок 1. Встановіть .NET 10 SDK
+
+Завантажте SDK з [офіційної сторінки Microsoft](https://dotnet.microsoft.com/en-us/download/dotnet/10.0). Виберіть **SDK** для своєї системи та архітектури: наприклад, Windows x64 для звичайного ПК з 64-бітною Windows. SDK містить засоби збірки та запуску; одного Runtime для наведених команд недостатньо.
+
+Після встановлення відкрийте нове вікно термінала та перевірте:
+
+```powershell
+dotnet --list-sdks
 ```
 
-Типово reliable перевіряє calm,working,emergency; search-seeds=4001,4002,4003; validation-seeds=5001..5005; fitness-repeats=1. Одна оцінка кандидата за цими параметрами коштує 9 повних прогонів. `--budget` — число кандидатів на кожен алгоритм, а не число сесій; додатково оцінюються спільний baseline і зафіксовані переможці на validation. Пошук не зупиняє сітку після першої невдачі та не кешує повторні точки. --fitness-repeats 1..10 множить витрати. Рівний бюджет збережений і за кількістю оцінок, і за кількістю прогонів пошуку.
+У списку має бути версія `10.0.xxx`. Для роботи з цим проєктом використовується .NET 10. Visual Studio не є обов'язковою — усі дії нижче виконуються через термінал.
 
-Збережений експеримент: по 24 кандидати random/GA, по 216 прогонів пошуку, потім окрема перевірка на 20 seed 5001–5020. Обидва переможці виконали всі 60 комбінацій validation. Середня Q: baseline 0.705938, random 0.730954, GA 0.730410. Це не гарантія прихованих seed і не доказ загальної переваги random або GA. На цій невеликій search-grid всі 48 кандидатів були допустимими; відмови й захист від вибору за validation перевірені окремими тестами.
+### Крок 2. Відкрийте термінал у папці проєкту
 
-`--strict` повертає 1, якщо переможець не виконав вимоги пошуку чи validation. Best.json зберігається навіть при невдачі; його статус треба дивитися в summary. Він містить лише три гени — delivery/copies/gap/модель задаються окремо. Історія reliable зберігає **score**, а не Q; MeanQ і статуси наведені окремо. Старий режим одного Q доступний без --objective або з --objective q. Нові прапорці seed без reliable відхиляються, а не ігноруються.
+1. Розпакуйте весь архів проєкту.
+2. Відкрийте папку, у якій одночасно є `TelemetryLink.slnx`, `src`, `tests` і `data`. Це **корінь проєкту**.
+3. У Windows натисніть адресний рядок Провідника, введіть `powershell` і натисніть Enter. Також можна відкрити цю папку у VS Code та вибрати Terminal → New Terminal.
+4. Переконайтеся, що поточна папка правильна:
 
-394 тести без пропусків, verify 11/11, Release build без помилок/попереджень. Виміри — `EXPERIMENTS-S12/`, повний протокол і пояснення — `RELIABLE-OPTIMIZATION.md`, перелік файлів та комміт — `STEP-14.md`.
-
-## Частина 13 (історія): рознесені повтори critical
-
-Додано `--delivery critical-repeat`: перший раунд critical-пакетів → до 8 звичайних пакетів → другий раунд тих самих critical-пакетів → решта звичайних. Це заздалегідь визначений план без ACK чи знання стану каналу. MLP і формат пакета не змінені. Типово copies=2 (один повтор), gap=8; дозволені --critical-copies 1..3 і --repeat-gap 0..64. Якщо звичайних пакетів недостатньо, проміжок коротший.
-
-```bash
-dotnet run --project src/TelemetryLink.Cli -- run --scenario emergency --delivery critical-repeat --critical-copies 2 --repeat-gap 8 --classifier mlp --model EXPERIMENTS-S7/mlp.json --strict --out results/repeat.csv
-dotnet run --project src/TelemetryLink.Cli -- compare --vary delivery=balanced,critical-first,critical-repeat --scenario calm,working,emergency --seeds 3001,3002,3003 --repeats 2 --warmup 1 --classifier mlp --model EXPERIMENTS-S7/mlp.json --out results/repeats.csv
+```powershell
+Get-Location
+Get-ChildItem
 ```
 
-Копія використовує ті самі незмінені байти захищеного пакета. Повторного шифрування або нового plaintext зі старим nonce немає. Це повтор датаграма, а не дублювання кадрів усередині payload; прапорець Duplication не встановлюється. Кожна доставлена копія проходить перевірку. Унікальні кадри та цінність зараховуються один раз; витрати всіх фактично надісланих копій входять у SentBits та Q. Деталі обліку — `REPEATED-DELIVERY.md`.
+У Linux/macOS відкрийте термінал у тій самій папці; поточний шлях і файли можна перевірити командами `pwd` та `ls`.
 
-На 20 нових seed 3001–3020: у critical-repeat середня аварійна втрата critical 2.47%, найгірша 13.33%; поріг 20% пройдено 20/20. Робочий поріг 5% також пройдено 20/20. Це результат для даної сесії та перевірених seed, а не гарантія для прихованого каналу. В аварійному режимі звичайних кадрів доставлено менше; у calm повтори знижують Q через зайві біти. Типовий balanced не змінений.
+**Усі наступні команди виконуються з кореня проєкту.** Вводьте кожну команду окремо та дочекайтеся її завершення. Довгі команди нижче копіюйте цілком в один рядок.
 
-369 тестів без пропусків, verify 11/11, Release build без помилок і попереджень. Файли вимірів — `EXPERIMENTS-S11/`, результати — `REPEATED-DELIVERY.md`, усі додані й змінені файли — `STEP-13.md`. Контроль порогів у random/GA додано режимом reliable у частині 14. Для повторного використання best.json delivery/copies/gap задаються окремо від трьох генів.
+### Крок 3. Завантажте залежності та зберіть проєкт
 
-## Частина 12 (історія): діагностика та пріоритет critical
-
-Новий режим `--delivery critical-first` пакує критичні та звичайні кадри окремо й передає critical-пакети першими. У critical-пакеті не більше 8 кадрів (або менше, якщо --window < 8), щоб одна втрата не забирала великий блок критичних даних. Звичайне вікно задається --window без додаткового обмеження. Обраний scheduler визначає порядок усередині кожної черги. Це пакетна обробка **вже записаного сеансу**: кадри можуть групуватися з різних моментів часу; режим не є потоковим планувальником із дедлайнами. MLP спочатку обробляє початкову часову послідовність один раз, потім результати прив'язуються до оригінальних індексів. Label не використовується.
-
-```bash
-dotnet run --project src/TelemetryLink.Cli -- run --scenario emergency --delivery critical-first --classifier mlp --model EXPERIMENTS-S7/mlp.json --out results/critical.csv
-dotnet run --project src/TelemetryLink.Cli -- compare --vary delivery=balanced,critical-first --scenario calm,working,emergency --seeds 2001,2002,2003 --repeats 3 --warmup 1 --classifier mlp --model EXPERIMENTS-S7/mlp.json --out results/delivery.csv
-```
-
-Типовий режим лишається `balanced` для відтворення попередніх результатів. `--delivery` підтримується run, compare та optimize. Best.json оптимізатора зберігає тільки три числові параметри: політику доставки при повторному запуску треба вказувати окремо. `compare --vary delivery=...` порівнює всю політику (групування + пріоритет черг), а не лише scheduler.
-
-У CSV run/compare додано delivery і причини недоставки critical: over_budget, channel_lost, receiver_rejected, receiver_failed, content_mismatch, not_packed. Разом із recovered_critical вони дають загальну кількість critical. NotPacked означає відсутність кадру серед сформованих пакетів; за штатного завершення всі кадри пакуються. ReceiverFailed також враховує пакети, що надійшли вже після аварії декодера.
-
-Результати цієї частини — `CRITICAL-DELIVERY.md`, файли — `EXPERIMENTS-S10/`, повний список змін — `STEP-12.md`. Попередні `RESULTS-S9.md` і результати S9 залишені історичними. Новий режим усуває причину втрат через бюджет у перевірених аварійних запусках, але не гарантує порогу 20% за втрат самого каналу. У фінальному порівнянні emergency середня втрата critical зменшилася з 63.93% до 13.73%, але поріг виконаний лише на 13/20 нових seed; робочий сценарій може погіршуватися. Формат пакетів, канал та еталони не змінені. У режимі critical-first кожен пакет передається один раз; повтори додано окремою політикою critical-repeat у частині 13.
-
-## Запуск з чистого каталогу
-
-Встановіть .NET 10 SDK. Розпакуйте проєкт і відкрийте термінал у папці, де `TelemetryLink.slnx`. Дані вже лежать у `data/`, готова модель — у `EXPERIMENTS-S7/mlp.json`.
-
-```bash
-dotnet --version
+```powershell
 dotnet restore TelemetryLink.slnx
+```
+
+Команда завантажує пакети NuGet. Для першого завантаження потрібен інтернет.
+
+```powershell
 dotnet build TelemetryLink.slnx -c Release -m:1
-dotnet test tests/TelemetryLink.Tests -c Release -m:1 --no-build
-dotnet run --project src/TelemetryLink.Cli -c Release --no-build -- verify
+```
+
+Очікуваний результат — `Build succeeded` / успішна збірка без помилок. `-c Release` обирає конфігурацію Release, а `-m:1` обмежує паралельну роботу MSBuild одним процесом.
+
+### Крок 4. Запустіть простий приклад
+
+```powershell
 dotnet run --project src/TelemetryLink.Cli -c Release --no-build -- run --scenario calm
 ```
 
-Це варіант під .NET 10, а не попередня адаптація для VS 2022. Запуск із термінала не вимагає Visual Studio. Перший restore потребує доступу до NuGet. Версію SDK показує `dotnet --version`; якщо команда не знаходиться, перевідкрийте термінал після встановлення SDK.
+Це спокійний сценарій без втрат каналу. Для даних комплекту очікуються:
 
-## Основні команди
+- 3000 вхідних та 3000 відновлених кадрів;
+- 0% втрат критичних кадрів;
+- повідомлення про точне побайтове відновлення;
+- значення S, R, T та Q.
 
-```bash
-dotnet run --project src/TelemetryLink.Cli -- inspect --session data/session.csv
-dotnet run --project src/TelemetryLink.Cli -- verify
-dotnet run --project src/TelemetryLink.Cli -- run --scenario emergency --classifier mlp --model EXPERIMENTS-S7/mlp.json --out results/run.csv
-dotnet run --project src/TelemetryLink.Cli -- experiment --name order --out results/order.csv
-dotnet run --project src/TelemetryLink.Cli -- compare --vary packer=dp,greedy --classifier mlp --model EXPERIMENTS-S7/mlp.json --scenario calm,working,emergency --seeds 1001,1002,1003 --repeats 3 --warmup 1 --out results/packers.csv
-dotnet run --project src/TelemetryLink.Cli -- compare --ablation --classifier mlp --model EXPERIMENTS-S7/mlp.json --scenario calm,working,emergency --seeds 1001,1002,1003 --repeats 3 --warmup 1 --out results/ablation.csv
-dotnet run --project src/TelemetryLink.Cli -- optimize --optimizer random,ga --budget 200 --seed 1 --scenario emergency --classifier mlp --model EXPERIMENTS-S7/mlp.json --out results/optimization.csv
-dotnet run --project src/TelemetryLink.Cli -- run --scenario emergency --classifier mlp --model EXPERIMENTS-S7/mlp.json --tuning EXPERIMENTS-S8/optimization.ga.best.json
+Програма виводить результат у термінал і завершується. Вона має командний інтерфейс, тому окреме графічне вікно не відкривається.
+
+`--project` задає проєкт командного інтерфейсу, `--no-build` запускає вже зібрані файли, а окреме `--` відокремлює параметри .NET від команд TelemetryLink. Після змін коду спочатку знову виконайте команду build.
+
+## 2. Запуск тестів і перевірка еталонів
+
+### Усі автоматичні тести
+
+```powershell
+dotnet test tests/TelemetryLink.Tests/TelemetryLink.Tests.csproj -c Release -m:1 --no-build
 ```
 
-`run` виконує один сценарій; для трьох сценаріїв запускайте його окремо з calm, working, emergency. У `compare` можна перелічити їх через кому. `--strict` повертає ненульовий код, якщо перевищено поріг втрат critical. Без strict це попередження; неточне відновлення завжди є помилкою. ExactRestore перевіряє доставлені пакети, а не відсутність втрат каналу.
+Для цієї версії очікується **394 успішні тести, 0 невдалих, 0 пропущених**. Тривалість залежить від комп'ютера. Перед використанням `--no-build` має бути виконана збірка з кроку 3.
 
-Без явних прапорців: huffman, dp, greedy scheduler, majority classifier. Для MLP потрібні обидва прапорці `--classifier mlp --model ...`. `--tuning` завантажує три параметри з best.json; явні --window/--threshold/--critical-weight їх перевизначають. Поріг стиснення порівнює кількість обраних кадрів при стисненні та без нього; це не значення у відсотках.
+Для детальнішого виводу:
 
-## Навчання MLP
-
-```bash
-dotnet run --project src/TelemetryLink.Cli -- train --no-test --out results/internal.json
-dotnet run --project src/TelemetryLink.Cli -- train --out results/mlp.json
+```powershell
+dotnet test tests/TelemetryLink.Tests/TelemetryLink.Tests.csproj -c Release -m:1 --no-build --logger "console;verbosity=normal"
 ```
 
-TRAIN ділиться хронологічно 80/20. Scaler та балансування рахуються тільки за першими 80%. Ознаки причинні: поточний і попередні кадри. Перебираються щонайменше три ініціалізації та обирається найкраща внутрішня валідація. valid.csv читається лише після вибору. Для підбору параметрів використовуйте --no-test; підсумковий TEST не використовуйте для перебору моделей.
+### Еталонні пакети викладача
 
-Збережений результат частини 9: internal macro-F1=0.8989, open TEST macro-F1=0.8778 при порозі 0.58. У фінальній частині модель повторно не навчалася. Прихований holdout викладача не перевірявся. `--window` для train — історія ознак, для run — вікно пакування.
+```powershell
+dotnet run --project src/TelemetryLink.Cli -c Release --no-build -- verify
+```
 
-## Результати та обмеження
+Очікується **11/11 пройдено**. Серед еталонів є навмисно пошкоджені пакети: їх очікуване відхилення також є успішною перевіркою.
 
-П'ять фінальних таблиць — `RESULTS-S9.md`, короткі відповіді й карта коду — `DEFENSE.md`. Файли свіжих вимірів — `EXPERIMENTS-S9/`. Повний список змін цієї частини — `STEP-11.md`; попередні STEP та EXPERIMENTS збережені як історія.
+`dotnet test` перевіряє алгоритми та їхню взаємодію. `verify` окремо показує результат перевірки файлів із `data/reference/`. Для перевірки проєкту виконайте обидві команди.
 
-Q = 0.5*S + 0.35*R + 0.15*T. S=B_ref/(B_ref+B_sent), R — частка відновлених critical, T=20/(20+t). Пошкодження/неточне відновлення або R=0 дає Q=0. За відсутності critical R=1. Коефіцієнт стиснення й S — різні метрики.
+## 3. Основний запуск із готовою моделлю та параметрами
 
-Час, T та Q залежать від комп'ютера. Повтори того самого seed не є незалежними реалізаціями каналу. GA не гарантує перевагу над random. Оптимізація Q не накладає жорсткого обмеження на втрату critical. Аварійний сценарій у збережених результатах перевищує допустимі 20%; це зазначено у таблицях.
+До комплекту входять:
 
-Експеримент order порівнює потік із байтовим доповненням та таблицю Гаффмана. Загальні витрати заголовка/salt/nonce/HMAC виключені з обох схем. Це лабораторне вимірювання обсягу, а не зміна робочого формату пакета. Salt і nonce випадкові; encrypt-first може мати трохи інший розмір при повторному запуску.
+| Файл | Призначення |
+|---|---|
+| `data/session.csv` | Сеанс із 3000 кадрів для передавання |
+| `data/team_config.json` | Налаштування формату, каналу, метрик і порогів |
+| `EXPERIMENTS-S7/mlp.json` | Навчена модель класифікації кадрів |
+| `EXPERIMENTS-S12/reliable.ga.best.json` | Три підібрані параметри тракту від GA |
+| `EXPERIMENTS-S12/reliable.random.best.json` | Альтернативний набір параметрів від random search |
 
-## Структура
+Запуск аварійного сценарію з MLP, повторними передачами critical та готовими параметрами GA:
 
-- `src/TelemetryLink.Core/` — алгоритми, формат, криптографія, тракт і метрики.
-- `src/TelemetryLink.Cli/` — команди, параметри й експорт.
-- `tests/TelemetryLink.Tests/` — модульні та приймальні перевірки.
-- `data/` — комплект даних і еталонів викладача.
-- `EXPERIMENTS-S7/` — готова модель MLP та протокол навчання.
-- `EXPERIMENTS-S8/` — приклад оптимізації частини 10.
-- `EXPERIMENTS-S9/` — фінальні виміри.
+```powershell
+dotnet run --project src/TelemetryLink.Cli -c Release --no-build -- run --scenario emergency --delivery critical-repeat --critical-copies 2 --repeat-gap 8 --classifier mlp --model EXPERIMENTS-S7/mlp.json --tuning EXPERIMENTS-S12/reliable.ga.best.json --strict --out results/emergency.csv
+```
 
-Сторонні ML-бібліотеки не використовуються. AES/SHA/HMAC/PBKDF2 беруться з System.Security.Cryptography; схема CTR, формат та порядок перевірок реалізовані в проєкті.
+Результат з'явиться в терміналі та файлі `results/emergency.csv`. Папка для цього експорту створиться автоматично. Щоб перевірити інший сценарій, змініть `--scenario` та, за потреби, ім'я вихідного файлу.
+
+| Сценарій | Значення `--scenario` | Допустимі втрати critical за комплектом |
+|---|---|---:|
+| Спокійний | `calm` | 0% |
+| Робочий | `working` | 5% |
+| Аварійний | `emergency` | 20% |
+
+У `run` задається **один сценарій за раз**. Списки через кому підтримуються командами `compare` та `optimize --objective reliable`.
+
+### Що означають параметри
+
+| Параметр | Пояснення |
+|---|---|
+| `--classifier mlp --model ...` | Використати збережену нейромережу |
+| `--delivery critical-repeat` | Передавати critical-пакети кількома рознесеними раундами |
+| `--critical-copies 2` | Дві спроби загалом, тобто один повтор |
+| `--repeat-gap 8` | До восьми звичайних пакетів між раундами critical; якщо їх менше, проміжок коротший |
+| `--tuning ...` | Завантажити вікно пакування, поріг стиснення та вагу critical |
+| `--strict` | Повернути код невдачі, якщо поріг втрат перевищено |
+| `--out ...` | Зберегти результат у файл |
+| `--channel-seed 425243` | Явно обрати seed моделі каналу; типово береться з конфігурації |
+
+Best.json зберігає **лише три числові параметри**, а не весь режим роботи. Прапорці доставки, повторів, модель та алгоритми при повторному запуску мають відповідати експерименту, у якому ці параметри отримані.
+
+### Режими доставки
+
+| Значення `--delivery` | Поведінка |
+|---|---|
+| `balanced` | Початкова схема пакування та передавання; типово |
+| `critical-first` | Окремі critical-пакети максимум по 8 кадрів, перша черга передавання |
+| `critical-repeat` | Таке саме групування з додатковими раундами передавання critical-пакетів |
+
+Без явного вибору типові компоненти — huffman, dp, greedy scheduler, majority classifier та balanced delivery. Отже, простий `run` і наведений вище повний запуск — різні конфігурації.
+
+Проєкт обробляє вже записаний сеанс. MLP обчислює ознаки в початковому часовому порядку до перегрупування. Повтори збільшують витрати каналу та можуть зменшити доставку звичайних кадрів. У спокійному каналі вони зазвичай зайві.
+
+## 4. Як читати результат
+
+| Показник | Значення |
+|---|---|
+| Відновлено кадрів | Скільки унікальних кадрів дійшло точно |
+| Відновлено critical | Скільки критичних кадрів дійшло точно |
+| Поза бюджетом | Пакети, для яких не вистачило часу передавання |
+| Втрачено каналом | Пакети, які передавалися, але загубилися |
+| S | Ефективність передавання: `B_ref / (B_ref + B_sent)` |
+| R | Частка відновлених critical; за їх відсутності — 1 |
+| T | Швидкодія: `20 / (20 + t)`, де t — час обчислення прогону |
+| Q | Підсумок: `0.5*S + 0.35*R + 0.15*T` за конфігурацією комплекту |
+| ExactRestore | Точність відновлення доставлених пакетів; не гарантія доставки всіх пакетів |
+
+Якщо порушено точне відновлення, приймач аварійно завершився або не відновлено жодного наявного critical, Q дорівнює 0. Повторно прийняті кадри й доставлена цінність не подвоюються, але всі фактично передані копії входять у B_sent. Число прийнятих спроб може перевищувати число унікальних сформованих пакетів — для повторів це нормально.
+
+У консолі та CSV також є причини недоставки critical, витрати повторів і кількість кадрів, уперше відновлених повтором. Коефіцієнт стиснення характеризує унікальні сформовані пакети; для повних витрат передачі дивіться `sent_bits` та `repeated_sent_bits`.
+
+### Коди завершення
+
+- `0` — команда виконана успішно за її умовами.
+- `1` — невдала перевірка, неточне відновлення або невиконаний поріг із `--strict`.
+- `2` — помилка аргументів, шляху або формату вхідного файлу.
+
+У PowerShell код останньої команди можна побачити через `$LASTEXITCODE`. Без `--strict` перевищення порогу в run/compare є попередженням, а не кодом 1. Помилка точного відновлення є невдачею незалежно від strict.
+
+## 5. Перегляд даних, стиснення та шифрування
+
+Подивитися сеанс:
+
+```powershell
+dotnet run --project src/TelemetryLink.Cli -c Release --no-build -- inspect --session data/session.csv
+```
+
+Подивитися еталонний захищений пакет:
+
+```powershell
+dotnet run --project src/TelemetryLink.Cli -c Release --no-build -- inspect --packet data/reference/ref_01_single_frame.bin
+```
+
+Перевірити стиснення та точне відновлення всього сеансу без каналу:
+
+```powershell
+dotnet run --project src/TelemetryLink.Cli -c Release --no-build -- compress
+```
+
+Порівняти обсяг при різному порядку стиснення та шифрування:
+
+```powershell
+dotnet run --project src/TelemetryLink.Cli -c Release --no-build -- experiment --name order --out results/order.csv
+```
+
+Результат — таблиця двох порядків і перевірка відновлення. Цей експеримент враховує таблицю Гаффмана та доповнення потоку; загальні витрати заголовка/salt/nonce/HMAC виключені з обох схем. Він не проганяє дані через канал.
+
+## 6. Порівняння алгоритмів
+
+### DP проти жадібного пакувальника
+
+```powershell
+dotnet run --project src/TelemetryLink.Cli -c Release --no-build -- compare --vary packer=dp,greedy --scenario calm,working,emergency --classifier mlp --model EXPERIMENTS-S7/mlp.json --out results/packers.csv
+```
+
+### Порівняння політик доставки на кількох seed
+
+```powershell
+dotnet run --project src/TelemetryLink.Cli -c Release --no-build -- compare --vary delivery=balanced,critical-first,critical-repeat --scenario calm,working,emergency --seeds 3001,3002,3003 --repeats 2 --warmup 1 --classifier mlp --model EXPERIMENTS-S7/mlp.json --out results/delivery.csv
+```
+
+### Вплив окремих компонентів (ablation)
+
+```powershell
+dotnet run --project src/TelemetryLink.Cli -c Release --no-build -- compare --ablation --scenario calm,working,emergency --delivery critical-repeat --classifier mlp --model EXPERIMENTS-S7/mlp.json --out results/ablation.csv
+```
+
+`--vary` задає, який компонент змінювати. Доступні codec, packer, scheduler, classifier та delivery. `--ablation` змінює окремі блоки відносно базової конфігурації. `--vary` і `--ablation` задаються окремо.
+
+`--seeds` задає список seed каналу, `--repeats` — повтори кожного варіанта на кожному seed, `--warmup` — прогрів, що не входить у таблиці. Повтори одного seed не є незалежними реалізаціями втрат. Без явних прапорців compare використовує 3 повтори та 1 прогрів.
+
+Для `--out results/delivery.csv` створюються:
+
+| Файл | Вміст |
+|---|---|
+| `results/delivery.csv` | Кожен виміряний прогін |
+| `results/delivery.summary.csv` | Середні значення, розкид і різниці Q |
+| `results/delivery.manifest.json` | Параметри, seed, компоненти та хеші входів |
+
+Для порівняння з brute потрібне однакове `--window` не більше 20 для всіх варіантів, наприклад `--vary packer=brute,dp,greedy --window 8`. Повний перебір на великих вікнах не використовується.
+
+## 7. Підбір параметрів random search та GA
+
+Для звичайного запуску можна користуватися готовими файлами з розділу 3. Наступна команда виконує новий пошук і може працювати помітно довше одного run:
+
+```powershell
+dotnet run --project src/TelemetryLink.Cli -c Release --no-build -- optimize --objective reliable --optimizer random,ga --budget 24 --population 8 --seed 1 --search-seeds 4001,4002,4003 --validation-seeds 5001,5002,5003,5004,5005 --delivery critical-repeat --critical-copies 2 --repeat-gap 8 --classifier mlp --model EXPERIMENTS-S7/mlp.json --strict --out results/reliable.csv
+```
+
+Підбираються три параметри: розмір вікна, поріг стиснення й вага критичних кадрів. Delivery, copies та gap залишаються заданими прапорцями.
+
+У режимі reliable кожен кандидат має виконати пороги втрат та цілісність у **кожному** прогоні search-grid. Допустимий набір завжди випереджає недопустимий; серед допустимих обирається найбільша середня Q. Обидва переможці фіксуються до початку validation. Seed пошуку та перевірки не можуть перетинатися.
+
+У наведеній команді кожен алгоритм оцінює 24 кандидати на трьох сценаріях і трьох search-seed: по 216 повних прогонів на алгоритм. Окремо виконуються спільний baseline і перевірка вже обраних конфігурацій. `--budget` означає кількість оцінок кандидатів, а не загальну кількість сесій. `--fitness-repeats` від 1 до 10 множить число прогонів кожної комбінації; типово 1.
+
+Зберігаються:
+
+| Файл | Вміст |
+|---|---|
+| `results/reliable.csv` | Історія службового score оптимізаторів |
+| `results/reliable.candidates.csv` | Оцінки кандидатів, статуси порогів і середня Q |
+| `results/reliable.runs.csv` | Кожен прогін із фазою, сценарієм та seed |
+| `results/reliable.summary.json` | Протокол, бюджет, компоненти та оцінки переможців |
+| `results/reliable.ga.best.json` | Три обрані гени GA |
+| `results/reliable.random.best.json` | Три обрані гени random search |
+
+Score — внутрішній ранг, а не Q; для допустимого кандидата він дорівнює `1 + mean(Q)`. Формула для порушень і повний протокол описані в [RELIABLE-OPTIMIZATION.md](RELIABLE-OPTIMIZATION.md).
+
+Якщо допустимого кандидата немає або переможець порушує поріг validation, команда попереджає та зі strict повертає 1. Best.json при цьому може бути збережений: перевіряйте `FoundFeasibleOnSearch` та `PassedValidation` у summary. Validation не використовується для заміни переможця.
+
+Попередній режим одного Q доступний через `--objective q` або без --objective. Для нового пошуку з контролем надійності вказуйте reliable явно.
+
+## 8. Навчання MLP — додаткова можливість
+
+Для запусків вище використовується готова модель `EXPERIMENTS-S7/mlp.json`. Наведені нижче команди потрібні, якщо ви хочете навчити власну модель.
+
+Навчання з внутрішньою валідацією без читання відкритого TEST:
+
+```powershell
+dotnet run --project src/TelemetryLink.Cli -c Release --no-build -- train --no-test --out results/internal.json
+```
+
+Навчання з підсумковою оцінкою на відкритому `valid.csv`:
+
+```powershell
+dotnet run --project src/TelemetryLink.Cli -c Release --no-build -- train --out results/mlp.json
+```
+
+Програма читає `data/train.csv`, ділить TRAIN у часовому порядку 80/20, рахує нормалізацію лише за першими 80% та обирає модель за внутрішньою валідацією серед щонайменше трьох ініціалізацій. Ознаки використовують поточний кадр та минулу історію. `valid.csv` оцінюється після вибору моделі. Для експериментів із параметрами навчання використовуйте --no-test, щоб не підбирати модель за TEST.
+
+Файли результатів:
+
+- `results/mlp.json` — модель разом із параметрами нормалізації;
+- `results/mlp.training.json` — протокол та оцінки;
+- `results/mlp.history.csv` — історія навчання.
+
+Щоб застосувати саме цю модель, у командах run/compare/optimize замініть `--model EXPERIMENTS-S7/mlp.json` на `--model results/mlp.json`. Перевірте підібрані параметри з новою моделлю окремо, оскільки вони отримані для збереженої моделі комплекту.
+
+Для власних файлів можна задати `--train` та `--valid`. `--no-test` і `--valid` разом не використовуються. `--window` у train — глибина історії ознак; у run/compare/optimize — вікно пакування. Історія готової моделі при запуску береться з її JSON.
+
+## 9. Файли проєкту та результати
+
+| Шлях | Призначення |
+|---|---|
+| `TelemetryLink.slnx` | Рішення .NET |
+| `src/TelemetryLink.Core/` | Алгоритми, формат пакетів, криптографія, метрики й тракт |
+| `src/TelemetryLink.Cli/` | Командний інтерфейс |
+| `tests/TelemetryLink.Tests/` | Автоматичні тести |
+| `data/` | Вхідні дані, конфігурація та еталони |
+| `results/` | Результати команд, які ви запускаєте самостійно |
+| `EXPERIMENTS-S7/` | Готова MLP та збережений протокол її навчання |
+| `EXPERIMENTS-S12/` | Готові параметри й збережена перевірка надійної оптимізації |
+| `EXPERIMENTS-S*/` | Попередні збережені експерименти |
+| `STEP-*.md` | Історія розробки, списки змін і комміти |
+
+CSV можна відкрити в Excel або іншому табличному редакторі. Якщо все потрапило в одну колонку, імпортуйте як CSV із роздільником **кома**; числа записані з десятковою крапкою. JSON відкривається у текстовому редакторі. Однаковий --out перезаписує відповідний файл, тому для окремих експериментів обирайте різні імена.
+
+Run, compare, train, optimize та experiment створюють папки свого експорту. Якщо використовуєте необов'язковий `compress --out results/compression.json`, спочатку створіть папку results: у PowerShell `New-Item -ItemType Directory -Path results -Force`, у Linux/macOS `mkdir -p results`.
+
+Збережені результати не оновлюються самі після нових запусків у results/. Час виконання та Q залежать від комп'ютера. Пороги перевірені на зазначених записах і seed; приховані дані викладача та довільні нові сеанси не мають гарантованого результату.
+
+## 10. Типові проблеми
+
+| Проблема | Що перевірити |
+|---|---|
+| `dotnet` не знайдено | Встановіть .NET 10 SDK і відкрийте нове вікно термінала |
+| SDK не підтримує .NET 10, помилка NETSDK1045 | Перевірте `dotnet --list-sdks` та `dotnet --info`; має бути доступний SDK 10.0 |
+| Не знайдено рішення або проєкт | Перейдіть у папку з TelemetryLink.slnx, src, tests і data |
+| Не знайдено data/session.csv або конфігурацію | Збережіть усю структуру архіву та запускайте з кореня; за потреби задайте --session і --config явно |
+| Не знайдено модель | Перевірте існування EXPERIMENTS-S7/mlp.json і прапорець --model |
+| Не знайдено готові параметри | Перевірте EXPERIMENTS-S12/reliable.ga.best.json або шлях до власного результату оптимізації |
+| Помилка запуску з --no-build | Виконайте build саме з -c Release; після змін коду збирайте повторно |
+| Помилка завантаження NuGet | Перевірте інтернет, доступ до джерела пакетів і повторіть dotnet restore TelemetryLink.slnx |
+| Попередження про втрати або код 1 зі strict | Подивіться фактичну втрату critical, поріг і причини недоставки; переконайтеся, що задані потрібні delivery/model/tuning |
+| Шлях містить пробіли | Беріть значення в подвійні лапки: --session "C:\My Data\session.csv" |
+| Числовий параметр не читається | Використовуйте крапку: --threshold 0.5 |
+| Нові seed не проходять пороги | Це результат перевірки; не змінюйте канал або пороги заради проходження. Оцініть конфігурацію на окремих search/validation seed |
+
+Якщо каталог даних задавався через змінну середовища TLM_DATA, перевірте, чи вона вказує на потрібний комплект. Її можна обійти явними --session та --config; для train також задаються --train та --valid, для verify — --reference.
+
+## 11. Довідка та пояснення алгоритмів
+
+Усі команди й доступні параметри:
+
+```powershell
+dotnet run --project src/TelemetryLink.Cli -c Release --no-build
+```
+
+Документи для подальшого читання:
+
+- [DEFENSE.md](DEFENSE.md) — карта коду та короткі відповіді для захисту;
+- [RESULTS-S9.md](RESULTS-S9.md) — початкові п'ять таблиць експериментів;
+- [CRITICAL-DELIVERY.md](CRITICAL-DELIVERY.md) — причини втрат і пріоритет critical;
+- [REPEATED-DELIVERY.md](REPEATED-DELIVERY.md) — повтори, їхній облік і компроміси;
+- [RELIABLE-OPTIMIZATION.md](RELIABLE-OPTIMIZATION.md) — критерій надійності, відбір і відкладена перевірка;
+- [STEP-14.md](STEP-14.md) та решта STEP-файлів — зміни за етапами.
