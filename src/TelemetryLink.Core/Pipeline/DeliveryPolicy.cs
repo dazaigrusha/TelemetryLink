@@ -1,7 +1,7 @@
 namespace TelemetryLink.Core.Pipeline;
 
 /// <summary>Політика пакетування записаного сеансу; формат пакета не змінює.</summary>
-public enum DeliveryPolicy { Balanced, CriticalFirst }
+public enum DeliveryPolicy { Balanced, CriticalFirst, CriticalRepeat }
 
 public static class DeliveryPolicies
 {
@@ -11,12 +11,14 @@ public static class DeliveryPolicies
     {
         "balanced" => DeliveryPolicy.Balanced,
         "critical-first" => DeliveryPolicy.CriticalFirst,
-        _ => throw new ArgumentException("--delivery: balanced або critical-first.")
+        "critical-repeat" => DeliveryPolicy.CriticalRepeat,
+        _ => throw new ArgumentException("--delivery: balanced, critical-first або critical-repeat.")
     };
     public static string Name(DeliveryPolicy policy) => policy switch
     {
         DeliveryPolicy.Balanced => "balanced",
         DeliveryPolicy.CriticalFirst => "critical-first",
+        DeliveryPolicy.CriticalRepeat => "critical-repeat",
         _ => throw new ArgumentOutOfRangeException(nameof(policy))
     };
 }

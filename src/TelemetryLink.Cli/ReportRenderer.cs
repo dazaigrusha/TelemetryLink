@@ -30,6 +30,11 @@ public static class ReportRenderer
             Console.WriteLine($"critical: доставлено={c.Recovered}, поза бюджетом={c.OverBudget}, втрачено каналом={c.ChannelLost}, " +
                 $"відхилено={c.ReceiverRejected}, збій приймача={c.ReceiverFailed}, невідповідність={c.ContentMismatch}, не запаковано={c.NotPacked}");
         }
+        if (report.PlannedRepeatAttempts > 0)
+            Console.WriteLine($"повтори: заплановано={report.PlannedRepeatAttempts}, передано={report.SentRepeatAttempts}, " +
+                $"біт={report.RepeatedSentBits}, critical відновлено повтором={report.CriticalRecoveredByRepeat}, " +
+                $"прийнято дублів={report.DuplicateAcceptedPackets}, унікальних пакетів={report.UniquePacketsAccepted}, " +
+                $"усіх спроб={report.TransmissionAttempts}");
         var channel = report.Channel;
         PrintPair("кадрів на вході", report.FrameCount, "пакетів сформовано", report.PacketsBuilt);
         PrintPair("сирих біт (B_ref)", report.ReferenceBits, "надіслано в канал", channel.Sent);

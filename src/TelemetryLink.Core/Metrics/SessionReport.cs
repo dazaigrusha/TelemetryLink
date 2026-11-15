@@ -55,6 +55,16 @@ public sealed record SessionReport
 {
     public required string ScenarioName { get; init; }
     public int ChannelSeed { get; init; }
+    public int CriticalCopies { get; init; } = 1;
+    public int RepeatGapPackets { get; init; }
+    public int TransmissionAttempts { get; init; }
+    public int PlannedRepeatAttempts { get; init; }
+    public int SentRepeatAttempts { get; init; }
+    public long RepeatedSentBits { get; init; }
+    public int DuplicateAcceptedPackets { get; init; }
+    public int UniquePacketsAccepted { get; init; }
+    public int RecoveredByRepeatFrames { get; init; }
+    public int CriticalRecoveredByRepeat { get; init; }
     public Pipeline.DeliveryPolicy Delivery { get; init; }
     public DeliveryDiagnostics? Diagnostics { get; init; }
     public required string CodecName { get; init; }

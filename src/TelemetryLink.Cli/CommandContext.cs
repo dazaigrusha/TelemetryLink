@@ -61,6 +61,8 @@ public sealed class CommandContext
             Classifier = AlgorithmCatalog.Classifier(
                 classifier ?? _options.Value("classifier", "majority"), LoadModel()),
             Tuning = tuning ?? CurrentTuning,
+            CriticalCopies = _options.Value("critical-copies", 2),
+            RepeatGapPackets = _options.Value("repeat-gap", 8),
             Delivery = DeliveryPolicies.Parse(delivery ?? (_options.Has("delivery") ? _options.Require("delivery") : "balanced"))
         };
 

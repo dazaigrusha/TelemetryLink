@@ -100,7 +100,10 @@ static int Help()
         Політика доставки записаного сеансу
           --delivery balanced        звичайне вікно (типово)
           --delivery critical-first  окремі critical-пакети, перша черга передачі
-          compare --vary delivery=balanced,critical-first
+          --delivery critical-repeat дві рознесені спроби для critical-пакетів
+          --critical-copies <n>       1..3 спроб загалом, типово 2
+          --repeat-gap <n>            0..64 звичайних пакетів між раундами, типово 8
+          compare --vary delivery=balanced,critical-first,critical-repeat
 
         Параметри тракту
           --window <n>              розмір вікна кандидатів

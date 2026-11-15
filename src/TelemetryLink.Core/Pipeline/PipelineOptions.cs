@@ -21,6 +21,9 @@ public sealed record PipelineOptions
     public required IFrameClassifier Classifier { get; init; }
     public DeliveryPolicy Delivery { get; init; } = DeliveryPolicy.Balanced;
 
+    public int CriticalCopies { get; init; } = 2;
+    public int RepeatGapPackets { get; init; } = 8;
+
     public Tuning Tuning { get; init; } = Tuning.Default;
 
     /// <summary>
@@ -30,5 +33,5 @@ public sealed record PipelineOptions
     public ushort DeviceId { get; init; } = 1;
 
     public string Describe() =>
-        $"codec={Codec.Name}  packer={Packer.Name}  scheduler={Scheduler.Name}  classifier={Classifier.Name}  delivery={DeliveryPolicies.Name(Delivery)}";
+        $"codec={Codec.Name}  packer={Packer.Name}  scheduler={Scheduler.Name}  classifier={Classifier.Name}  delivery={DeliveryPolicies.Name(Delivery)}  critical-copies={CriticalCopies}  repeat-gap={RepeatGapPackets}";
 }

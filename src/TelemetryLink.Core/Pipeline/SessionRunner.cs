@@ -34,14 +34,12 @@ public sealed class SessionRunner
         if (scheduled.Count != packets.Count || !scheduled.Select(p => p.Sequence).OrderBy(i => i)
             .SequenceEqual(packets.Select(p => p.Sequence).OrderBy(i => i)))
             throw new InvalidOperationException("Планувальник має повернути перестановку сформованих пакетів.");
-        // Stable partition: selected scheduler still determines order inside each tier.
-        if (_options.Delivery == DeliveryPolicy.CriticalFirst)
-            scheduled = scheduled.OrderByDescending(p => p.FrameIndexes.Any(i => session.Frames[i].IsCritical)).ToArray();
+        scheduled = TransmissionPlan.Create(scheduled, session.Frames, _options);
         var outcomes = new FrameDeliveryOutcome[session.Frames.Count];
         void Mark(Packet packet, FrameDeliveryOutcome outcome)
         {
             foreach (int index in packet.FrameIndexes)
-                if (outcomes[index] != FrameDeliveryOutcome.Recovered) outcomes[index] = outcome;
+                outcomes[index] = FrameDeliveryOutcomes.Merge(outcomes[index], outcome);
         }
         channel ??= new MarkovChannel(scenario, channelSeed);
         var receiver = new Receiver(keys, decoder);
@@ -49,13 +47,24 @@ public sealed class SessionRunner
         bool exact = true;
         bool receiverCrashed = false;
         long sentBits = 0;
-        int deliveredValue = 0;
+        int deliveredValue = 0, plannedRepeats = 0, sentRepeats = 0, duplicateAccepted = 0;
+        int recoveredByRepeat = 0, criticalRecoveredByRepeat = 0;
+        long repeatedSentBits = 0;
+        var credited = new HashSet<uint>();
+        var attempts = new Dictionary<uint, int>();
         foreach (var packet in scheduled)
         {
+            int attempt = attempts.GetValueOrDefault(packet.Sequence) + 1; attempts[packet.Sequence] = attempt;
+            bool repeat = attempt > 1;
+            if (repeat) plannedRepeats++;
             int sentBefore = channel.Statistics.Sent;
             var transmission = channel.Send(packet.Bytes);
             // Втрачені пакети витрачають смугу, over-budget — ні.
-            if (channel.Statistics.Sent > sentBefore) sentBits += (long)packet.SizeInBytes * 8;
+            if (channel.Statistics.Sent > sentBefore)
+            {
+                long bits = (long)packet.SizeInBytes * 8; sentBits += bits;
+                if (repeat) { sentRepeats++; repeatedSentBits += bits; }
+            }
             if (!transmission.Delivered)
             {
                 Mark(packet, channel.Statistics.Sent > sentBefore ? FrameDeliveryOutcome.ChannelLost : FrameDeliveryOutcome.OverBudget);
@@ -84,8 +93,14 @@ public sealed class SessionRunner
             exact &= equal;
             if (!equal) { Mark(packet, FrameDeliveryOutcome.ContentMismatch); continue; }
             Mark(packet, FrameDeliveryOutcome.Recovered);
-            foreach (int index in packet.FrameIndexes) recovered.Add(index);
-            deliveredValue = checked(deliveredValue + packet.Value);
+            foreach (int index in packet.FrameIndexes)
+                if (recovered.Add(index) && repeat)
+                {
+                    recoveredByRepeat++;
+                    if (session.Frames[index].IsCritical) criticalRecoveredByRepeat++;
+                }
+            if (credited.Add(packet.Sequence)) deliveredValue = checked(deliveredValue + packet.Value);
+            else duplicateAccepted++;
         }
         stopwatch.Stop();
         int recoveredCritical = recovered.Count(i => session.Frames[i].IsCritical);
@@ -97,6 +112,12 @@ public sealed class SessionRunner
             ScenarioName = scenario.Name,
             ChannelSeed = channelSeed,
             Delivery = _options.Delivery,
+            CriticalCopies = _options.Delivery == DeliveryPolicy.CriticalRepeat ? _options.CriticalCopies : 1,
+            RepeatGapPackets = _options.Delivery == DeliveryPolicy.CriticalRepeat ? _options.RepeatGapPackets : 0,
+            TransmissionAttempts = scheduled.Count, PlannedRepeatAttempts = plannedRepeats,
+            SentRepeatAttempts = sentRepeats, RepeatedSentBits = repeatedSentBits,
+            DuplicateAcceptedPackets = duplicateAccepted, UniquePacketsAccepted = credited.Count,
+            RecoveredByRepeatFrames = recoveredByRepeat, CriticalRecoveredByRepeat = criticalRecoveredByRepeat,
             Diagnostics = new DeliveryDiagnostics(DeliveryBreakdown.Count(outcomes),
                 DeliveryBreakdown.Count(outcomes.Where((_, i) => session.Frames[i].IsCritical))),
             CodecName = _options.Codec.Name,
@@ -121,9 +142,7 @@ public sealed class SessionRunner
             ReceiverCrashed = receiverCrashed,
             Channel = channel.Statistics,
             Rejections = new Dictionary<Format.RejectionCode, int>(receiver.Rejections),
-            S = s,
-            R = r,
-            T = t,
+            S = s, R = r, T = t,
             Q = QualityMetric.Combine(_config, s, r, t, receiverHealthy: exact && !receiverCrashed)
         };
     }

@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "created_utc": "2026-11-15T15:21:53.239388+00:00",
+  "sdk": "10.0.100",
+  "copies": 2,
+  "gap_packets": 8,
+  "evaluation_seeds": [
+    3001,
+    3002,
+    3003,
+    3004,
+    3005,
+    3006,
+    3007,
+    3008,
+    3009,
+    3010,
+    3011,
+    3012,
+    3013,
+    3014,
+    3015,
+    3016,
+    3017,
+    3018,
+    3019,
+    3020
+  ],
+  "control_seed": 425243,
+  "repeats": 2,
+  "warmup": 1,
+  "feedback_used": false,
+  "model_retrained": false,
+  "base_wire_format": true,
+  "inputs": [
+    {
+      "file": "data/session.csv",
+      "sha256": "db5d92746846a9ee14c16eb59b5b97bd816a82bb39efb00e9ccfbd06ff67406f"
+    },
+    {
+      "file": "data/team_config.json",
+      "sha256": "49ca1de019c0e3f2c6e644372b491efab21ba51dbe731ed3a88873f740019690"
+    },
+    {
+      "file": "EXPERIMENTS-S7/mlp.json",
+      "sha256": "c77a300dc4649d93e58d7587d1f7ecac86d7849ab1881c6edf85b691d532f186"
+    }
+  ],
+  "sources": [
+    {
+      "file": "src/TelemetryLink.Core/Pipeline/TransmissionPlan.cs",
+      "sha256": "bf3fb60fd9e91b6da43ea05812a99ce2f31dcd3e17f54b804d5a378c8a1ceab8"
+    },
+    {
+      "file": "src/TelemetryLink.Core/Pipeline/SessionRunner.cs",
+      "sha256": "d6174d2ad2b472fa926b5533f20c8e3601829d85b2860583b49d5de08661fbf6"
+    },
+    {
+      "file": "src/TelemetryLink.Core/Pipeline/Transmitter.cs",
+      "sha256": "7dbd85032c7f37e333c6a2842afd89c5b2ec6d9a379f262dde8d79738aa6b26f"
+    }
+  ],
+  "outputs": [
+    {
+      "file": "EXPERIMENTS-S11/control.csv",
+      "sha256": "c30ee0d51eaac1bacf0126585b7fc4196175dd2862b45ab04732648fe49ece13"
+    },
+    {
+      "file": "EXPERIMENTS-S11/control.manifest.json",
+      "sha256": "119c9c49fe2889952b442e62e24f2a1493041adb97b33de95fc38fab6911aff4"
+    },
+    {
+      "file": "EXPERIMENTS-S11/control.summary.csv",
+      "sha256": "fd4f05ec197cba5eb244e3644a5b7fe2b66b9aeceec6c82ac5487e81982050b0"
+    },
+    {
+      "file": "EXPERIMENTS-S11/reliability.summary.json",
+      "sha256": "044e92d368820eee0015bbf810ba3c274d21286e7ffeb031ec058bafd121bc54"
+    },
+    {
+      "file": "EXPERIMENTS-S11/repeats.csv",
+      "sha256": "9ade4b953fa19227f1153c18cc3ef4e9d31ef8f6f04a96af3a8553c2653c1d3d"
+    },
+    {
+      "file": "EXPERIMENTS-S11/repeats.manifest.json",
+      "sha256": "d5ffff7575827d8ba85ba9323d32467b8f7ef5be5258b2279b6c4da0ec498486"
+    },
+    {
+      "file": "EXPERIMENTS-S11/repeats.summary.csv",
+      "sha256": "bcfe79d50063f0882442f5828d539690f8a8c41db8986f8d939c79798377ffc1"
+    }
+  ]
+}

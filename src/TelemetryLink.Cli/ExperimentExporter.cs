@@ -15,8 +15,7 @@ public static class ExperimentExporter
     {
         string text = value switch
         {
-            null => "",
-            bool flag => flag ? "true" : "false",
+            null => "", bool flag => flag ? "true" : "false",
             IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
             _ => value.ToString() ?? ""
         };
@@ -84,54 +83,28 @@ public static class ExperimentExporter
                 s.MeanDeliveredValue, s.MeanCriticalLoss, s.ExactRestore));
         var manifest = new
         {
-            SchemaVersion = 1,
-            CreatedUtc = DateTimeOffset.UtcNow,
-            Runtime = RuntimeInformation.FrameworkDescription,
-            OS = RuntimeInformation.OSDescription,
-            Architecture = RuntimeInformation.ProcessArchitecture.ToString(),
-            ProcessorCount = Environment.ProcessorCount,
-            Inputs = new
-            {
-                Session = Fingerprint(sessionPath),
-                Config = Fingerprint(configPath),
-                Model = modelPath is null ? null : Fingerprint(modelPath)
-            },
-            Protocol = new
-            {
-                settings.Dimension,
-                settings.Ablation,
-                settings.Repeats,
-                settings.Warmup,
-                ChannelSeeds = settings.Seeds,
-                Baseline = variants[0].Name,
-                Order = "rotation by repetition",
-                WarmupIncludedInStatistics = false,
+            SchemaVersion = 1, CreatedUtc = DateTimeOffset.UtcNow,
+            Runtime = RuntimeInformation.FrameworkDescription, OS = RuntimeInformation.OSDescription,
+            Architecture = RuntimeInformation.ProcessArchitecture.ToString(), ProcessorCount = Environment.ProcessorCount,
+            Inputs = new { Session = Fingerprint(sessionPath), Config = Fingerprint(configPath),
+                Model = modelPath is null ? null : Fingerprint(modelPath) },
+            Protocol = new { settings.Dimension, settings.Ablation, settings.Repeats, settings.Warmup,
+                ChannelSeeds = settings.Seeds, Baseline = variants[0].Name,
+                Order = "rotation by repetition", WarmupIncludedInStatistics = false,
                 FixedSeedRepeatsAreIndependentChannelSamples = false,
                 StdDev = "sample SD (n-1); zero by convention for n=1",
-                Delta = "paired by scenario, channel_seed and repeat"
-            },
-            Variants = variants.Select(v => new {
-                v.Name,
-                v.ReuseBaseline,
-                v.Note,
-                Codec = v.Options.Codec.Name,
-                Packer = v.Options.Packer.Name,
-                Scheduler = v.Options.Scheduler.Name,
-                Classifier = v.Options.Classifier.Name,
-                Delivery = Core.Pipeline.DeliveryPolicies.Name(v.Options.Delivery),
-                v.Options.Tuning,
-                v.Options.DeviceId
-            }),
+                Delta = "paired by scenario, channel_seed and repeat" },
+            Variants = variants.Select(v => new { v.Name, v.ReuseBaseline, v.Note, Codec = v.Options.Codec.Name,
+                Packer = v.Options.Packer.Name, Scheduler = v.Options.Scheduler.Name,
+                Classifier = v.Options.Classifier.Name, v.Options.CriticalCopies, v.Options.RepeatGapPackets, Delivery = Core.Pipeline.DeliveryPolicies.Name(v.Options.Delivery), v.Options.Tuning, v.Options.DeviceId }),
             Scenarios = settings.Scenarios.Select(config.Scenario),
             Metric = new { config.Alpha, config.Beta, config.Gamma, config.ReferenceTimeSeconds },
-            Rows = runs.Count,
-            MeasuredRuns = runs.Count(r => !r.ReusedBaseline),
+            Rows = runs.Count, MeasuredRuns = runs.Count(r => !r.ReusedBaseline),
             Files = paths.Select(Path.GetFileName)
         };
         string metadata = JsonSerializer.Serialize(manifest, new JsonSerializerOptions
         {
-            WriteIndented = true,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals
         });
         ReportRenderer.EnsureDirectory(paths[0]);
