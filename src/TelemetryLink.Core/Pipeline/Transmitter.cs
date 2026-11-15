@@ -28,6 +28,7 @@ public sealed class Transmitter
 
     public IReadOnlyList<Packet> BuildPackets(IReadOnlyList<TelemetryFrame> frames)
     {
+        _ = DeliveryPolicies.Name(_options.Delivery);
         var tuning = _options.Tuning;
         if (tuning.WindowFrames < 1 || tuning.WindowFrames > ushort.MaxValue
             || !double.IsFinite(tuning.CompressionThreshold) || tuning.CompressionThreshold < 0
@@ -51,10 +52,18 @@ public sealed class Transmitter
             return packets;
         }
 
-        var pending = Enumerable.Range(0, frames.Count).ToList();
+        // Classify the original chronology once BEFORE changing packet grouping.
+        // In critical-first mode a window cannot mix priority tiers.
+        var pending = (_options.Delivery == DeliveryPolicy.CriticalFirst
+            ? Enumerable.Range(0, frames.Count).OrderByDescending(i => frames[i].IsCritical)
+            : Enumerable.Range(0, frames.Count).AsEnumerable()).ToList();
         while (pending.Count > 0)
         {
-            int[] window = pending.Take(tuning.WindowFrames).ToArray();
+            int windowLimit = _options.Delivery == DeliveryPolicy.CriticalFirst && frames[pending[0]].IsCritical
+                ? Math.Min(tuning.WindowFrames, DeliveryPolicies.MaxCriticalFramesPerPacket) : tuning.WindowFrames;
+            int[] window = pending.Take(windowLimit)
+                .TakeWhile(i => _options.Delivery != DeliveryPolicy.CriticalFirst
+                    || frames[i].IsCritical == frames[pending[0]].IsCritical).ToArray();
             byte[] sample = TelemetryFrame.Serialize(window.Select(i => frames[i]).ToArray());
             // Таблиця будується за ВСІМ вікном і не змінюється після вибору.
             CodeTable table = _options.Codec.BuildTable(sample);

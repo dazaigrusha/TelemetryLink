@@ -36,6 +36,7 @@ public static class CompareCommand
     private static PipelineOptions BuildVariant(CommandContext context, string dimension, string variant)
         => dimension switch
         {
+            "delivery" => context.BuildPipeline(delivery: variant),
             "codec" => context.BuildPipeline(codec: variant),
             "packer" => context.BuildPipeline(packer: variant),
             "scheduler" => context.BuildPipeline(scheduler: variant),

@@ -55,6 +55,8 @@ public sealed record SessionReport
 {
     public required string ScenarioName { get; init; }
     public int ChannelSeed { get; init; }
+    public Pipeline.DeliveryPolicy Delivery { get; init; }
+    public DeliveryDiagnostics? Diagnostics { get; init; }
     public required string CodecName { get; init; }
     public required string PackerName { get; init; }
     public required string SchedulerName { get; init; }

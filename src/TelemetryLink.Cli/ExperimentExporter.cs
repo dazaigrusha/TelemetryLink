@@ -15,7 +15,8 @@ public static class ExperimentExporter
     {
         string text = value switch
         {
-            null => "", bool flag => flag ? "true" : "false",
+            null => "",
+            bool flag => flag ? "true" : "false",
             IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
             _ => value.ToString() ?? ""
         };
@@ -62,11 +63,11 @@ public static class ExperimentExporter
         ValidateDestinations(path, sessionPath, configPath, modelPath);
         string[] paths = OutputPaths(path);
         var raw = new StringBuilder();
-        raw.AppendLine("scenario,variant,channel_seed,repeat,reused_baseline,codec,packer,scheduler,classifier,window,compression_threshold,critical_weight,frames,critical,recovered_frames,recovered_critical,reference_bits,sent_bits,built_bits,elapsed_ms,packets_built,packets_sent,packets_lost,packets_over_budget,packets_accepted,value,delivered_value,compression_ratio,S,R,T,Q,critical_loss,critical_loss_limit,within_threshold,exact_restore,receiver_crashed,channel_time_s");
+        raw.AppendLine("scenario,variant,channel_seed,repeat,reused_baseline,codec,packer,scheduler,classifier,window,compression_threshold,critical_weight,frames,critical,recovered_frames,recovered_critical,reference_bits,sent_bits,built_bits,elapsed_ms,packets_built,packets_sent,packets_lost,packets_over_budget,packets_accepted,value,delivered_value,compression_ratio,S,R,T,Q,critical_loss,critical_loss_limit,within_threshold,exact_restore,receiver_crashed,channel_time_s," + DeliveryDiagnosticColumns.Header);
         foreach (var run in runs)
         {
             var r = run.Report;
-            raw.AppendLine(CsvRow(r.ScenarioName, run.Variant, run.ChannelSeed, run.Repeat, run.ReusedBaseline,
+            raw.AppendLine(CsvRow(new object?[] { r.ScenarioName, run.Variant, run.ChannelSeed, run.Repeat, run.ReusedBaseline,
                 r.CodecName, r.PackerName, r.SchedulerName, r.ClassifierName, r.Tuning.WindowFrames,
                 r.Tuning.CompressionThreshold, r.Tuning.CriticalWeight, r.FrameCount, r.CriticalFrameCount,
                 r.RecoveredFrameCount, r.RecoveredCriticalFrameCount, r.ReferenceBits, r.SentBits, r.BuiltBits,
@@ -74,7 +75,7 @@ public static class ExperimentExporter
                 r.PacketsAccepted, r.SelectedValue, r.DeliveredValue, r.CompressionRatio, r.S, r.R, r.T, r.Q,
                 r.CriticalLossRatio, config.CriticalLossThreshold(r.ScenarioName),
                 r.CriticalLossRatio <= config.CriticalLossThreshold(r.ScenarioName) + 1e-9,
-                r.ExactRestore, r.ReceiverCrashed, r.Channel.ChannelTimeSeconds));
+                r.ExactRestore, r.ReceiverCrashed, r.Channel.ChannelTimeSeconds }.Concat(DeliveryDiagnosticColumns.Values(r)).ToArray()));
         }
         var summary = new StringBuilder("scenario,variant,samples,measured_runs,mean_S,mean_R,mean_T,mean_Q,sd_Q,mean_delta_Q,mean_elapsed_ms,mean_sent_bits,mean_delivered_value,mean_critical_loss,exact_restore\n");
         foreach (var s in summaries)
@@ -83,28 +84,54 @@ public static class ExperimentExporter
                 s.MeanDeliveredValue, s.MeanCriticalLoss, s.ExactRestore));
         var manifest = new
         {
-            SchemaVersion = 1, CreatedUtc = DateTimeOffset.UtcNow,
-            Runtime = RuntimeInformation.FrameworkDescription, OS = RuntimeInformation.OSDescription,
-            Architecture = RuntimeInformation.ProcessArchitecture.ToString(), ProcessorCount = Environment.ProcessorCount,
-            Inputs = new { Session = Fingerprint(sessionPath), Config = Fingerprint(configPath),
-                Model = modelPath is null ? null : Fingerprint(modelPath) },
-            Protocol = new { settings.Dimension, settings.Ablation, settings.Repeats, settings.Warmup,
-                ChannelSeeds = settings.Seeds, Baseline = variants[0].Name,
-                Order = "rotation by repetition", WarmupIncludedInStatistics = false,
+            SchemaVersion = 1,
+            CreatedUtc = DateTimeOffset.UtcNow,
+            Runtime = RuntimeInformation.FrameworkDescription,
+            OS = RuntimeInformation.OSDescription,
+            Architecture = RuntimeInformation.ProcessArchitecture.ToString(),
+            ProcessorCount = Environment.ProcessorCount,
+            Inputs = new
+            {
+                Session = Fingerprint(sessionPath),
+                Config = Fingerprint(configPath),
+                Model = modelPath is null ? null : Fingerprint(modelPath)
+            },
+            Protocol = new
+            {
+                settings.Dimension,
+                settings.Ablation,
+                settings.Repeats,
+                settings.Warmup,
+                ChannelSeeds = settings.Seeds,
+                Baseline = variants[0].Name,
+                Order = "rotation by repetition",
+                WarmupIncludedInStatistics = false,
                 FixedSeedRepeatsAreIndependentChannelSamples = false,
                 StdDev = "sample SD (n-1); zero by convention for n=1",
-                Delta = "paired by scenario, channel_seed and repeat" },
-            Variants = variants.Select(v => new { v.Name, v.ReuseBaseline, v.Note, Codec = v.Options.Codec.Name,
-                Packer = v.Options.Packer.Name, Scheduler = v.Options.Scheduler.Name,
-                Classifier = v.Options.Classifier.Name, v.Options.Tuning, v.Options.DeviceId }),
+                Delta = "paired by scenario, channel_seed and repeat"
+            },
+            Variants = variants.Select(v => new {
+                v.Name,
+                v.ReuseBaseline,
+                v.Note,
+                Codec = v.Options.Codec.Name,
+                Packer = v.Options.Packer.Name,
+                Scheduler = v.Options.Scheduler.Name,
+                Classifier = v.Options.Classifier.Name,
+                Delivery = Core.Pipeline.DeliveryPolicies.Name(v.Options.Delivery),
+                v.Options.Tuning,
+                v.Options.DeviceId
+            }),
             Scenarios = settings.Scenarios.Select(config.Scenario),
             Metric = new { config.Alpha, config.Beta, config.Gamma, config.ReferenceTimeSeconds },
-            Rows = runs.Count, MeasuredRuns = runs.Count(r => !r.ReusedBaseline),
+            Rows = runs.Count,
+            MeasuredRuns = runs.Count(r => !r.ReusedBaseline),
             Files = paths.Select(Path.GetFileName)
         };
         string metadata = JsonSerializer.Serialize(manifest, new JsonSerializerOptions
         {
-            WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals
         });
         ReportRenderer.EnsureDirectory(paths[0]);

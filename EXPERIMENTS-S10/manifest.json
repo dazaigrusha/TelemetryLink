@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "created_utc": "2026-11-09T15:36:09.771051+00:00",
+  "sdk": "10.0.403",
+  "critical_packet_frame_limit": 8,
+  "development_seeds": [
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006,
+    1007,
+    1008,
+    1009,
+    1010
+  ],
+  "evaluation_seeds": [
+    2001,
+    2002,
+    2003,
+    2004,
+    2005,
+    2006,
+    2007,
+    2008,
+    2009,
+    2010,
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020
+  ],
+  "control_seed": 425243,
+  "repeats": 3,
+  "warmup": 1,
+  "model_retrained": false,
+  "online_mode": false,
+  "inputs": [
+    {
+      "file": "data/session.csv",
+      "sha256": "db5d92746846a9ee14c16eb59b5b97bd816a82bb39efb00e9ccfbd06ff67406f"
+    },
+    {
+      "file": "data/team_config.json",
+      "sha256": "49ca1de019c0e3f2c6e644372b491efab21ba51dbe731ed3a88873f740019690"
+    },
+    {
+      "file": "EXPERIMENTS-S7/mlp.json",
+      "sha256": "c77a300dc4649d93e58d7587d1f7ecac86d7849ab1881c6edf85b691d532f186"
+    }
+  ],
+  "sources": [
+    {
+      "file": "src/TelemetryLink.Core/Pipeline/DeliveryPolicy.cs",
+      "sha256": "03ffe84256c7165598698577bbd70f75f78193beded9a35fb0ec1012b78d0e7b"
+    },
+    {
+      "file": "src/TelemetryLink.Core/Pipeline/Transmitter.cs",
+      "sha256": "85b9b0cf0f18f9bb73c5ee11206f5579b64d34aeb5ca4d1e67b36913fc056580"
+    },
+    {
+      "file": "src/TelemetryLink.Core/Pipeline/SessionRunner.cs",
+      "sha256": "58667da60c7b404395d6f291a07163aef5b1b993ffa0ded7bc7f98d980db7bdc"
+    }
+  ],
+  "outputs": [
+    {
+      "file": "EXPERIMENTS-S10/control.csv",
+      "sha256": "785def1d0b91a638e971bfd2903688100f310f415bc42180afa8ee8969352cc7"
+    },
+    {
+      "file": "EXPERIMENTS-S10/control.manifest.json",
+      "sha256": "e78269207ff222c8fafd48b4441ad3ab4da0ff725a0f875172463290d215184b"
+    },
+    {
+      "file": "EXPERIMENTS-S10/control.summary.csv",
+      "sha256": "3a491ad1f0e8de95eda7d88ffcdd4cc6237bf2234cf739ec1391573928318031"
+    },
+    {
+      "file": "EXPERIMENTS-S10/delivery.csv",
+      "sha256": "a74ccfcf66c1a5b407b2977a12912e8aeeac8f868842952832016ad900fce954"
+    },
+    {
+      "file": "EXPERIMENTS-S10/delivery.manifest.json",
+      "sha256": "aa51537be4e0329d6295002079d3935a1042540591f92f5889b451460906ac24"
+    },
+    {
+      "file": "EXPERIMENTS-S10/delivery.summary.csv",
+      "sha256": "ad7a2ca0701e355aa4967ca62939e6cd8f2e459457956f7a8595e43e7c9ee1ef"
+    },
+    {
+      "file": "EXPERIMENTS-S10/diagnostics.summary.json",
+      "sha256": "421480af1eab22d26ed79fb400c43462330f410fa482b7150015177f2b2f1ea4"
+    }
+  ]
+}

@@ -23,6 +23,13 @@ public static class ReportRenderer
         Console.WriteLine($"параметри: {report.Tuning}");
         Console.WriteLine();
 
+        Console.WriteLine($"доставка: {TelemetryLink.Core.Pipeline.DeliveryPolicies.Name(report.Delivery)}");
+        if (report.Diagnostics is { } diagnostics)
+        {
+            var c = diagnostics.CriticalFrames;
+            Console.WriteLine($"critical: доставлено={c.Recovered}, поза бюджетом={c.OverBudget}, втрачено каналом={c.ChannelLost}, " +
+                $"відхилено={c.ReceiverRejected}, збій приймача={c.ReceiverFailed}, невідповідність={c.ContentMismatch}, не запаковано={c.NotPacked}");
+        }
         var channel = report.Channel;
         PrintPair("кадрів на вході", report.FrameCount, "пакетів сформовано", report.PacketsBuilt);
         PrintPair("сирих біт (B_ref)", report.ReferenceBits, "надіслано в канал", channel.Sent);
@@ -138,10 +145,10 @@ public static class ReportRenderer
         builder.AppendLine("scenario,codec,packer,scheduler,classifier,frames,critical,recovered_critical," +
                            "reference_bits,sent_bits,elapsed_ms,packets_built,packets_accepted,value,delivered_value,compression_ratio,S,R,T,Q," +
                            "recovered_frames,built_bits,packed_frames,window,compression_threshold,critical_weight," +
-                           "packets_sent,packets_lost,packets_over_budget,channel_time_s,critical_loss,exact_restore,receiver_crashed,channel_seed");
+                           "packets_sent,packets_lost,packets_over_budget,channel_time_s,critical_loss,exact_restore,receiver_crashed,channel_seed," + DeliveryDiagnosticColumns.Header);
 
         foreach (var r in reports)
-            builder.AppendLine(ExperimentExporter.CsvRow(
+            builder.AppendLine(ExperimentExporter.CsvRow(new object?[] {
                 r.ScenarioName, r.CodecName, r.PackerName, r.SchedulerName, r.ClassifierName,
                 r.FrameCount, r.CriticalFrameCount, r.RecoveredCriticalFrameCount,
                 r.ReferenceBits, r.SentBits,
@@ -153,7 +160,7 @@ public static class ReportRenderer
                 r.RecoveredFrameCount, r.BuiltBits, r.PackedFrameCount, r.Tuning.WindowFrames,
                 r.Tuning.CompressionThreshold, r.Tuning.CriticalWeight, r.Channel.Sent, r.Channel.Lost,
                 r.Channel.OverBudget, r.Channel.ChannelTimeSeconds, r.CriticalLossRatio, r.ExactRestore,
-                r.ReceiverCrashed, r.ChannelSeed));
+                r.ReceiverCrashed, r.ChannelSeed }.Concat(DeliveryDiagnosticColumns.Values(r)).ToArray()));
 
         EnsureDirectory(path);
         File.WriteAllText(path, builder.ToString());

@@ -19,6 +19,8 @@ public sealed record PipelineOptions
     public required IFramePacker Packer { get; init; }
     public required ISendScheduler Scheduler { get; init; }
     public required IFrameClassifier Classifier { get; init; }
+    public DeliveryPolicy Delivery { get; init; } = DeliveryPolicy.Balanced;
+
     public Tuning Tuning { get; init; } = Tuning.Default;
 
     /// <summary>
@@ -28,5 +30,5 @@ public sealed record PipelineOptions
     public ushort DeviceId { get; init; } = 1;
 
     public string Describe() =>
-        $"codec={Codec.Name}  packer={Packer.Name}  scheduler={Scheduler.Name}  classifier={Classifier.Name}";
+        $"codec={Codec.Name}  packer={Packer.Name}  scheduler={Scheduler.Name}  classifier={Classifier.Name}  delivery={DeliveryPolicies.Name(Delivery)}";
 }

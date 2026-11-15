@@ -53,14 +53,15 @@ public sealed class CommandContext
     /// </summary>
     public PipelineOptions BuildPipeline(
         string? codec = null, string? packer = null, string? scheduler = null, string? classifier = null,
-        Tuning? tuning = null) => new()
+        Tuning? tuning = null, string? delivery = null) => new()
         {
             Codec = AlgorithmCatalog.Codec(codec ?? _options.Value("codec", "huffman")),
             Packer = AlgorithmCatalog.Packer(packer ?? _options.Value("packer", "dp")),
             Scheduler = AlgorithmCatalog.Scheduler(scheduler ?? _options.Value("scheduler", "greedy")),
             Classifier = AlgorithmCatalog.Classifier(
                 classifier ?? _options.Value("classifier", "majority"), LoadModel()),
-            Tuning = tuning ?? CurrentTuning
+            Tuning = tuning ?? CurrentTuning,
+            Delivery = DeliveryPolicies.Parse(delivery ?? (_options.Has("delivery") ? _options.Require("delivery") : "balanced"))
         };
 
     public Tuning CurrentTuning

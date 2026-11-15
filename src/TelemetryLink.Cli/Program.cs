@@ -59,7 +59,7 @@ static int Help()
           --out <шлях>         куди записати CSV або JSON
 
         Порівняння
-          --vary <вимір=a,b>   codec | packer | scheduler | classifier
+          --vary <вимір=a,b>   codec | packer | scheduler | classifier | delivery
           --ablation          вимкнення по одному блоку поточної конфігурації
           --repeats <n>       повторів на кожен seed, типово 3
           --warmup <n>        прогрівів, типово 1; не входять до CSV
@@ -96,6 +96,11 @@ static int Help()
           --elite <n>          еліт без переоцінки, типово 1
           --out <file.csv>     історія + .summary.json + .ga/.random.best.json
           --tuning <file.json> збережені параметри для run/compare
+
+        Політика доставки записаного сеансу
+          --delivery balanced        звичайне вікно (типово)
+          --delivery critical-first  окремі critical-пакети, перша черга передачі
+          compare --vary delivery=balanced,critical-first
 
         Параметри тракту
           --window <n>              розмір вікна кандидатів

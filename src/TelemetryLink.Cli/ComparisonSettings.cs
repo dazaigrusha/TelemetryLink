@@ -18,8 +18,8 @@ public sealed record ComparisonSettings(string Dimension, string[] Variants, str
             if (parts.Length != 2 || string.IsNullOrWhiteSpace(parts[0]))
                 throw new ArgumentException("Очікується --vary packer=sequential,greedy,dp.");
             dimension = parts[0].Trim().ToLowerInvariant();
-            if (dimension is not ("codec" or "packer" or "scheduler" or "classifier"))
-                throw new ArgumentException("Вимір має бути codec, packer, scheduler або classifier.");
+            if (dimension is not ("codec" or "packer" or "scheduler" or "classifier" or "delivery"))
+                throw new ArgumentException("Вимір має бути codec, packer, scheduler, classifier або delivery.");
             variants = List(parts[1], "--vary").Select(s => s.ToLowerInvariant()).ToArray();
         }
         string[] scenarios = options.Has("scenario") ? List(options.Require("scenario"), "--scenario")

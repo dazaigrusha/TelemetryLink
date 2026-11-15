@@ -34,6 +34,15 @@ public sealed class SessionRunner
         if (scheduled.Count != packets.Count || !scheduled.Select(p => p.Sequence).OrderBy(i => i)
             .SequenceEqual(packets.Select(p => p.Sequence).OrderBy(i => i)))
             throw new InvalidOperationException("Планувальник має повернути перестановку сформованих пакетів.");
+        // Stable partition: selected scheduler still determines order inside each tier.
+        if (_options.Delivery == DeliveryPolicy.CriticalFirst)
+            scheduled = scheduled.OrderByDescending(p => p.FrameIndexes.Any(i => session.Frames[i].IsCritical)).ToArray();
+        var outcomes = new FrameDeliveryOutcome[session.Frames.Count];
+        void Mark(Packet packet, FrameDeliveryOutcome outcome)
+        {
+            foreach (int index in packet.FrameIndexes)
+                if (outcomes[index] != FrameDeliveryOutcome.Recovered) outcomes[index] = outcome;
+        }
         channel ??= new MarkovChannel(scenario, channelSeed);
         var receiver = new Receiver(keys, decoder);
         var recovered = new HashSet<int>();
@@ -47,27 +56,34 @@ public sealed class SessionRunner
             var transmission = channel.Send(packet.Bytes);
             // Втрачені пакети витрачають смугу, over-budget — ні.
             if (channel.Statistics.Sent > sentBefore) sentBits += (long)packet.SizeInBytes * 8;
-            if (!transmission.Delivered) continue;
-            if (receiverCrashed) continue;
+            if (!transmission.Delivered)
+            {
+                Mark(packet, channel.Statistics.Sent > sentBefore ? FrameDeliveryOutcome.ChannelLost : FrameDeliveryOutcome.OverBudget);
+                continue;
+            }
+            if (receiverCrashed) { Mark(packet, FrameDeliveryOutcome.ReceiverFailed); continue; }
             Format.ReceiveResult result;
             try { result = receiver.Accept(packet.Bytes); }
             catch (Exception exception) when (exception is not (OutOfMemoryException or OperationCanceledException))
             {
                 // Порушення декодера — провал приймання, а не успішний прогін.
                 // Вміст пакета та текст винятку у звіт не потрапляють.
+                Mark(packet, FrameDeliveryOutcome.ReceiverFailed);
                 receiverCrashed = true;
                 exact = false;
                 continue;
             }
             if (!result.IsAccepted)
             {
+                Mark(packet, FrameDeliveryOutcome.ReceiverRejected);
                 exact = false;
                 continue;
             }
             byte[] expected = TelemetryFrame.Serialize(packet.FrameIndexes.Select(i => session.Frames[i]).ToArray());
             bool equal = expected.AsSpan().SequenceEqual(TelemetryFrame.Serialize(result.Frames));
             exact &= equal;
-            if (!equal) continue;
+            if (!equal) { Mark(packet, FrameDeliveryOutcome.ContentMismatch); continue; }
+            Mark(packet, FrameDeliveryOutcome.Recovered);
             foreach (int index in packet.FrameIndexes) recovered.Add(index);
             deliveredValue = checked(deliveredValue + packet.Value);
         }
@@ -80,6 +96,9 @@ public sealed class SessionRunner
         {
             ScenarioName = scenario.Name,
             ChannelSeed = channelSeed,
+            Delivery = _options.Delivery,
+            Diagnostics = new DeliveryDiagnostics(DeliveryBreakdown.Count(outcomes),
+                DeliveryBreakdown.Count(outcomes.Where((_, i) => session.Frames[i].IsCritical))),
             CodecName = _options.Codec.Name,
             PackerName = _options.Packer.Name,
             SchedulerName = _options.Scheduler.Name,
