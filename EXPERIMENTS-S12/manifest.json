@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "created_utc": "2026-11-15T15:43:17.968327+00:00",
+  "sdk": "10.0.100",
+  "objective": "reliable",
+  "budget_per_optimizer": 24,
+  "search_seeds": [
+    4001,
+    4002,
+    4003
+  ],
+  "validation_seeds": [
+    5001,
+    5002,
+    5003,
+    5004,
+    5005,
+    5006,
+    5007,
+    5008,
+    5009,
+    5010,
+    5011,
+    5012,
+    5013,
+    5014,
+    5015,
+    5016,
+    5017,
+    5018,
+    5019,
+    5020
+  ],
+  "scenarios": [
+    "calm",
+    "working",
+    "emergency"
+  ],
+  "repeats": 1,
+  "search_runs_per_optimizer": 216,
+  "baseline_search_runs": 9,
+  "validation_runs": 180,
+  "total_runs": 621,
+  "validation_used_for_selection": false,
+  "inputs": [
+    {
+      "file": "data/team_config.json",
+      "sha256": "49ca1de019c0e3f2c6e644372b491efab21ba51dbe731ed3a88873f740019690"
+    },
+    {
+      "file": "data/session.csv",
+      "sha256": "db5d92746846a9ee14c16eb59b5b97bd816a82bb39efb00e9ccfbd06ff67406f"
+    },
+    {
+      "file": "EXPERIMENTS-S7/mlp.json",
+      "sha256": "c77a300dc4649d93e58d7587d1f7ecac86d7849ab1881c6edf85b691d532f186"
+    }
+  ],
+  "sources": [
+    {
+      "file": "src/TelemetryLink.Core/Optimization/ReliabilityFitness.cs",
+      "sha256": "32a694dfaab9e32a85c017d0152123246b0d04393b128b445c6ee9ba82573b43"
+    },
+    {
+      "file": "src/TelemetryLink.Core/Optimization/ReliableOptimizationExperiment.cs",
+      "sha256": "aa97f18f2a78b717bfefa47e3bacfa8f1f4a11762c5996b82972dc382630b130"
+    },
+    {
+      "file": "src/TelemetryLink.Cli/ReliableOptimizationSettings.cs",
+      "sha256": "7269c6902136219d3fb3b028c3551636fc60d2d6cfa73d52c1ec662420924901"
+    },
+    {
+      "file": "src/TelemetryLink.Cli/Commands/ReliableOptimizeCommand.cs",
+      "sha256": "8639cb2f0127f38f5fd18e419509590281c91b10fae3b6f8017ef6f3f11b8ad7"
+    }
+  ],
+  "outputs": [
+    {
+      "file": "EXPERIMENTS-S12/reliable.candidates.csv",
+      "sha256": "a19778f431db04d578eea4c31019976908dd674edb9ea2084892a4d9e17ccbe7"
+    },
+    {
+      "file": "EXPERIMENTS-S12/reliable.csv",
+      "sha256": "6923db5605f0ce53623f724f809d016e33493d38ded052f8b66019b2b40175cd"
+    },
+    {
+      "file": "EXPERIMENTS-S12/reliable.ga.best.json",
+      "sha256": "d20213212f8db69342f1146f2274eea6196e6c10ef1ac1c6ff50cfb9c5a409b3"
+    },
+    {
+      "file": "EXPERIMENTS-S12/reliable.random.best.json",
+      "sha256": "eda88b7f1cc5cbf4f6364ea139c995b1778b145d4ae3ee3971887c9456a01cae"
+    },
+    {
+      "file": "EXPERIMENTS-S12/reliable.runs.csv",
+      "sha256": "05d09ee43b5bacb53f10106c1b5744e1c17d246dfdef52ecf3c3bec98c8f1840"
+    },
+    {
+      "file": "EXPERIMENTS-S12/reliable.summary.json",
+      "sha256": "f4cce20e8332329547376cab5de8e103af9454a21b84462c959bc706c8776768"
+    },
+    {
+      "file": "EXPERIMENTS-S12/validation.summary.csv",
+      "sha256": "03736e43919de83ace9d6784bd1d649078629f4aa48a577c80b370cbff4dfeed"
+    }
+  ]
+}

@@ -1,0 +1,370 @@
+{
+  "SchemaVersion": 1,
+  "Objective": "reliable",
+  "CreatedUtc": "2026-11-15T15:37:13.7792888+00:00",
+  "Runtime": ".NET 10.0.0",
+  "BudgetPerOptimizer": 24,
+  "Seed": 1,
+  "Settings": {
+    "Scenarios": [
+      "calm",
+      "working",
+      "emergency"
+    ],
+    "SearchSeeds": [
+      4001,
+      4002,
+      4003
+    ],
+    "ValidationSeeds": [
+      5001,
+      5002,
+      5003,
+      5004,
+      5005,
+      5006,
+      5007,
+      5008,
+      5009,
+      5010,
+      5011,
+      5012,
+      5013,
+      5014,
+      5015,
+      5016,
+      5017,
+      5018,
+      5019,
+      5020
+    ],
+    "Repeats": 1,
+    "SearchRunsPerCandidate": 9,
+    "ValidationRunsPerCandidate": 60
+  },
+  "GeneticOptions": {
+    "PopulationSize": 8,
+    "TournamentSize": 3,
+    "MutationProbability": 0.2,
+    "MutationScale": 0.15,
+    "EliteCount": 1
+  },
+  "Pipeline": {
+    "Codec": "huffman",
+    "Packer": "dp",
+    "Scheduler": "greedy",
+    "Classifier": "mlp",
+    "Delivery": "critical-repeat",
+    "CriticalCopies": 2,
+    "RepeatGapPackets": 8,
+    "DeviceId": 1
+  },
+  "Protocol": {
+    "Selection": "search grid only; all winners frozen before validation",
+    "ValidationUsedForSelection": false,
+    "ThresholdRule": "every scenario/seed/repeat; loss \u003C= limit \u002B 1e-9; exact restore; no receiver crash",
+    "Score": "healthy feasible: 1\u002BmeanQ; healthy infeasible: -failed/N-meanExcess/(N\u002B1); integrity failure: -3-bad/N",
+    "InfeasibleRanking": "fewer failed cells first, then smaller mean excess; Q does not rescue violations",
+    "FitnessRunsPerOptimizer": 216,
+    "BaselineSearchRuns": 9,
+    "ValidationRuns": 180,
+    "Cache": "none; every fitness callback runs full grid, even for duplicate candidates or failed thresholds",
+    "EliteReevaluation": false,
+    "FitnessIsDeterministic": false,
+    "Timing": "wall-clock Q is noisy; baseline search runs first, no additional warmup"
+  },
+  "Scenarios": [
+    {
+      "Name": "calm",
+      "CriticalLossLimit": 0
+    },
+    {
+      "Name": "working",
+      "CriticalLossLimit": 0.05
+    },
+    {
+      "Name": "emergency",
+      "CriticalLossLimit": 0.2
+    }
+  ],
+  "Inputs": {
+    "Config": {
+      "FileName": "team_config.json",
+      "Sha256": "49ca1de019c0e3f2c6e644372b491efab21ba51dbe731ed3a88873f740019690"
+    },
+    "Session": {
+      "FileName": "session.csv",
+      "Sha256": "db5d92746846a9ee14c16eb59b5b97bd816a82bb39efb00e9ccfbd06ff67406f"
+    },
+    "Model": {
+      "FileName": "mlp.json",
+      "Sha256": "c77a300dc4649d93e58d7587d1f7ecac86d7849ab1881c6edf85b691d532f186"
+    },
+    "InitialTuning": null
+  },
+  "Baseline": {
+    "Training": {
+      "Cells": 9,
+      "IntegrityFailures": 0,
+      "ThresholdFailures": 0,
+      "MeanQ": 0.702410588836337,
+      "MeanExcess": 0,
+      "WorstExcess": 0,
+      "Feasible": true,
+      "Score": 1.702410588836337
+    },
+    "Validation": {
+      "Cells": 60,
+      "IntegrityFailures": 0,
+      "ThresholdFailures": 0,
+      "MeanQ": 0.705938183664738,
+      "MeanExcess": 0,
+      "WorstExcess": 0,
+      "Feasible": true,
+      "Score": 1.705938183664738
+    },
+    "Tuning": {
+      "WindowFrames": 64,
+      "CompressionThreshold": 0.5,
+      "CriticalWeight": 1
+    }
+  },
+  "Results": [
+    {
+      "Optimizer": "random",
+      "Best": {
+        "WindowFrames": 37,
+        "CompressionThreshold": 0.6546727058266628,
+        "CriticalWeight": 2.981389049897617
+      },
+      "BestFitness": 1.7283646049610764,
+      "Evaluations": 24,
+      "History": [
+        {
+          "Generation": 0,
+          "BestFitness": 1.7208427049498651,
+          "MeanFitness": 1.7208427049498651,
+          "Evaluations": 1
+        },
+        {
+          "Generation": 1,
+          "BestFitness": 1.7280709465352726,
+          "MeanFitness": 1.724456825742569,
+          "Evaluations": 2
+        },
+        {
+          "Generation": 2,
+          "BestFitness": 1.7280709465352726,
+          "MeanFitness": 1.7247231377643957,
+          "Evaluations": 3
+        },
+        {
+          "Generation": 3,
+          "BestFitness": 1.7280709465352726,
+          "MeanFitness": 1.724131577579881,
+          "Evaluations": 4
+        },
+        {
+          "Generation": 4,
+          "BestFitness": 1.7280709465352726,
+          "MeanFitness": 1.7242267984161281,
+          "Evaluations": 5
+        },
+        {
+          "Generation": 5,
+          "BestFitness": 1.7280709465352726,
+          "MeanFitness": 1.7236132961736372,
+          "Evaluations": 6
+        },
+        {
+          "Generation": 6,
+          "BestFitness": 1.7280709465352726,
+          "MeanFitness": 1.724201765948823,
+          "Evaluations": 7
+        },
+        {
+          "Generation": 7,
+          "BestFitness": 1.7280709465352726,
+          "MeanFitness": 1.7223832470921892,
+          "Evaluations": 8
+        },
+        {
+          "Generation": 8,
+          "BestFitness": 1.7280709465352726,
+          "MeanFitness": 1.7206540603690952,
+          "Evaluations": 9
+        },
+        {
+          "Generation": 9,
+          "BestFitness": 1.7280709465352726,
+          "MeanFitness": 1.7209884388264975,
+          "Evaluations": 10
+        },
+        {
+          "Generation": 10,
+          "BestFitness": 1.7280709465352726,
+          "MeanFitness": 1.721602670915103,
+          "Evaluations": 11
+        },
+        {
+          "Generation": 11,
+          "BestFitness": 1.7280709465352726,
+          "MeanFitness": 1.7198201468616807,
+          "Evaluations": 12
+        },
+        {
+          "Generation": 12,
+          "BestFitness": 1.7280709465352726,
+          "MeanFitness": 1.7182338675631113,
+          "Evaluations": 13
+        },
+        {
+          "Generation": 13,
+          "BestFitness": 1.7283646049610764,
+          "MeanFitness": 1.718957491662966,
+          "Evaluations": 14
+        },
+        {
+          "Generation": 14,
+          "BestFitness": 1.7283646049610764,
+          "MeanFitness": 1.719173330148034,
+          "Evaluations": 15
+        },
+        {
+          "Generation": 15,
+          "BestFitness": 1.7283646049610764,
+          "MeanFitness": 1.7197413051208392,
+          "Evaluations": 16
+        },
+        {
+          "Generation": 16,
+          "BestFitness": 1.7283646049610764,
+          "MeanFitness": 1.7197634351974525,
+          "Evaluations": 17
+        },
+        {
+          "Generation": 17,
+          "BestFitness": 1.7283646049610764,
+          "MeanFitness": 1.7195443973219546,
+          "Evaluations": 18
+        },
+        {
+          "Generation": 18,
+          "BestFitness": 1.7283646049610764,
+          "MeanFitness": 1.7198995009047024,
+          "Evaluations": 19
+        },
+        {
+          "Generation": 19,
+          "BestFitness": 1.7283646049610764,
+          "MeanFitness": 1.7194461659639422,
+          "Evaluations": 20
+        },
+        {
+          "Generation": 20,
+          "BestFitness": 1.7283646049610764,
+          "MeanFitness": 1.7195853366585365,
+          "Evaluations": 21
+        },
+        {
+          "Generation": 21,
+          "BestFitness": 1.7283646049610764,
+          "MeanFitness": 1.719580987564298,
+          "Evaluations": 22
+        },
+        {
+          "Generation": 22,
+          "BestFitness": 1.7283646049610764,
+          "MeanFitness": 1.7199308008091194,
+          "Evaluations": 23
+        },
+        {
+          "Generation": 23,
+          "BestFitness": 1.7283646049610764,
+          "MeanFitness": 1.7202555026259987,
+          "Evaluations": 24
+        }
+      ],
+      "Training": {
+        "Cells": 9,
+        "IntegrityFailures": 0,
+        "ThresholdFailures": 0,
+        "MeanQ": 0.7283646049610762,
+        "MeanExcess": 0,
+        "WorstExcess": 0,
+        "Feasible": true,
+        "Score": 1.7283646049610764
+      },
+      "Validation": {
+        "Cells": 60,
+        "IntegrityFailures": 0,
+        "ThresholdFailures": 0,
+        "MeanQ": 0.7309536166795526,
+        "MeanExcess": 0,
+        "WorstExcess": 0,
+        "Feasible": true,
+        "Score": 1.7309536166795527
+      },
+      "FoundFeasibleOnSearch": true,
+      "PassedValidation": true
+    },
+    {
+      "Optimizer": "ga",
+      "Best": {
+        "WindowFrames": 51,
+        "CompressionThreshold": 1.5270209589633257,
+        "CriticalWeight": 0.014893322840748957
+      },
+      "BestFitness": 1.7282581895400724,
+      "Evaluations": 24,
+      "History": [
+        {
+          "Generation": 0,
+          "BestFitness": 1.7282165715450488,
+          "MeanFitness": 1.7224649332227209,
+          "Evaluations": 8
+        },
+        {
+          "Generation": 1,
+          "BestFitness": 1.7282581895400724,
+          "MeanFitness": 1.7259477405777308,
+          "Evaluations": 15
+        },
+        {
+          "Generation": 2,
+          "BestFitness": 1.7282581895400724,
+          "MeanFitness": 1.7275998779851345,
+          "Evaluations": 22
+        },
+        {
+          "Generation": 3,
+          "BestFitness": 1.7282581895400724,
+          "MeanFitness": 1.7280663860242964,
+          "Evaluations": 24
+        }
+      ],
+      "Training": {
+        "Cells": 9,
+        "IntegrityFailures": 0,
+        "ThresholdFailures": 0,
+        "MeanQ": 0.7282581895400723,
+        "MeanExcess": 0,
+        "WorstExcess": 0,
+        "Feasible": true,
+        "Score": 1.7282581895400724
+      },
+      "Validation": {
+        "Cells": 60,
+        "IntegrityFailures": 0,
+        "ThresholdFailures": 0,
+        "MeanQ": 0.7304104476270975,
+        "MeanExcess": 0,
+        "WorstExcess": 0,
+        "Feasible": true,
+        "Score": 1.7304104476270976
+      },
+      "FoundFeasibleOnSearch": true,
+      "PassedValidation": true
+    }
+  ]
+}

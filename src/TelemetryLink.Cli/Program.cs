@@ -86,6 +86,14 @@ static int Help()
           --classifier  {CLASSIFIERS}
           --optimizer   {OPTIMIZERS}
 
+        Оптимізація з контролем надійності
+          --objective reliable       перевірка порогів у кожному прогоні; q — попередній режим (типово)
+          --search-seeds <a,b>        seed для відбору, типово 4001,4002,4003
+          --validation-seeds <a,b>    інші seed лише для перевірки обраних конфігурацій
+          --fitness-repeats <n>       1..10 повторів кожного сценарію/seed, типово 1
+          --scenario <a,b>            для reliable: типово calm,working,emergency
+          --strict                   код 1, якщо переможець порушує пороги пошуку або перевірки
+
         Оптимізація
           --budget <n>         рівно n викликів fitness на кожен алгоритм
           --seed <n>           seed оптимізатора, типово 1

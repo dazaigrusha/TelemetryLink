@@ -10,6 +10,11 @@ public static class OptimizeCommand
 {
     public static int Execute(CommandLineOptions options)
     {
+        string objective = options.Has("objective") ? options.Require("objective").ToLowerInvariant() : "q";
+        if (objective == "reliable") return ReliableOptimizeCommand.Execute(options);
+        if (objective != "q") throw new ArgumentException("--objective: q або reliable.");
+        if (options.Has("search-seeds") || options.Has("validation-seeds") || options.Has("fitness-repeats"))
+            throw new ArgumentException("Ці параметри потребують --objective reliable.");
         var context = new CommandContext(options);
         int budget = options.Value("budget", 60), seed = options.Value("seed", 1);
         if (budget < 1) throw new ArgumentException("--budget має бути додатним.");
@@ -59,15 +64,32 @@ public static class OptimizeCommand
         }
         File.WriteAllLines(output, rows);
         object Fingerprint(string path) => new { FileName = Path.GetFileName(path), Sha256 = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path))).ToLowerInvariant() };
-        var summary = new { SchemaVersion = 1, CreatedUtc = DateTimeOffset.UtcNow, BudgetPerOptimizer = budget, Seed = seed,
-            context.ChannelSeed, Scenario = scenario.Name, Pipeline = pipeline.Describe(), GeneticOptions = gaOptions,
+        var summary = new
+        {
+            SchemaVersion = 1,
+            CreatedUtc = DateTimeOffset.UtcNow,
+            BudgetPerOptimizer = budget,
+            Seed = seed,
+            context.ChannelSeed,
+            Scenario = scenario.Name,
+            Pipeline = pipeline.Describe(),
+            GeneticOptions = gaOptions,
             Bounds = Tuning.Bounds.Select((b, i) => new { Gene = Tuning.GeneNames[i], b.Low, b.High }),
-            Protocol = new { Fitness = "full-session Q", FixedChannelSeed = true, FitnessIsDeterministic = false,
-                Timing = "Q includes measured elapsed time; no guarantee of GA superiority", EliteReevaluation = false,
-                RandomMean = "all samples so far", GeneticMean = "current population, including cached elites",
-                PartialGeneration = "stop exactly at budget; retain elites", PopulationOne = "elitist (1+1) strategy" },
+            Protocol = new
+            {
+                Fitness = "full-session Q",
+                FixedChannelSeed = true,
+                FitnessIsDeterministic = false,
+                Timing = "Q includes measured elapsed time; no guarantee of GA superiority",
+                EliteReevaluation = false,
+                RandomMean = "all samples so far",
+                GeneticMean = "current population, including cached elites",
+                PartialGeneration = "stop exactly at budget; retain elites",
+                PopulationOne = "elitist (1+1) strategy"
+            },
             Inputs = new { Config = Fingerprint(configPath), Session = Fingerprint(sessionPath), Model = modelPath is null ? null : Fingerprint(modelPath) },
-            Results = results.Select(x => new { Optimizer = x.Name, x.Result.Best, x.Result.BestFitness, x.Result.Evaluations, x.Result.History }) };
+            Results = results.Select(x => new { Optimizer = x.Name, x.Result.Best, x.Result.BestFitness, x.Result.Evaluations, x.Result.History })
+        };
         File.WriteAllText(stem + ".summary.json", JsonSerializer.Serialize(summary, new JsonSerializerOptions { WriteIndented = true }));
         foreach (string path in outputs) Console.WriteLine($"записано: {path}");
         return 0;
